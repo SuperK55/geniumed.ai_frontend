@@ -321,17 +321,32 @@ const VoiceAgents = () => {
               {/* Action Buttons */}
               <div className="flex space-x-2 pt-2">
                 {agent.status === 'active' ? (
-                  <Button variant="outline" size="sm" className="flex-1 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 rounded-xl border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-800 focus:bg-gray-50 focus:text-gray-800 focus:border-gray-400"
+                    style={{ backgroundColor: 'white', borderColor: '#d1d5db' }}
+                  >
                     <Pause className="w-4 h-4 mr-2" />
                     Pause
                   </Button>
                 ) : (
-                  <Button variant="outline" size="sm" className="flex-1 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 rounded-xl border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-800 focus:bg-gray-50 focus:text-gray-800 focus:border-gray-400"
+                    style={{ backgroundColor: 'white', borderColor: '#d1d5db' }}
+                  >
                     <Play className="w-4 h-4 mr-2" />
                     Start
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="flex-1 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 rounded-xl border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-800 focus:bg-gray-50 focus:text-gray-800 focus:border-gray-400"
+                  style={{ backgroundColor: 'white', borderColor: '#d1d5db' }}
+                >
                   <Activity className="w-4 h-4 mr-2" />
                   Monitor
                 </Button>

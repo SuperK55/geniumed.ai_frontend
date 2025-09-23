@@ -4,6 +4,7 @@ import Sidebar from '../components/Layout/Sidebar';
 import Header from '../components/Layout/Header';
 import Dashboard from './Dashboard';
 import VoiceAgents from './VoiceAgents';
+import Profile from './Profile';
 
 const MedicalCRM = () => {
   return (
@@ -17,6 +18,7 @@ const MedicalCRM = () => {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="voice-agents" element={<VoiceAgents />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="patients" element={
               <div className="text-center py-12">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">Patients Module</h2>
