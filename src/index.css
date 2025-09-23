@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Theme Colors */
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+    --muted: 248 250 252;
+    --muted-foreground: 100 116 139;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 37 99 235;              /* Blue ring for focus states */
+    --radius: 0.75rem;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    
+    /* Medical color scheme - No yellow/orange */
+    --primary: 37 99 235;           /* Blue */
+    --primary-foreground: 255 255 255;
+    --secondary: 8 145 178;         /* Teal */
+    --secondary-foreground: 255 255 255;
+    --accent: 100 116 139;          /* Neutral gray (was orange) */
+    --accent-foreground: 255 255 255;
+    --success: 16 185 129;          /* Green */
+    --success-foreground: 255 255 255;
+    --warning: 245 158 11;          /* Amber (only for warnings) */
+    --warning-foreground: 255 255 255;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Remove browser autocomplete yellow styling */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #000 !important;
+    background-color: white !important;
+    background-image: none !important;
+  }
+
+  /* Override any yellow focus outlines */
+  input:focus,
+  textarea:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    border-color: #2563eb !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+  
+  .gradient-warning {
+    background: var(--gradient-warning);
+  }
+  
+  .glow-primary {
+    box-shadow: var(--shadow-glow-primary);
+  }
+  
+  .glow-secondary {
+    box-shadow: var(--shadow-glow-secondary);
+  }
+  
+  .glow-success {
+    box-shadow: var(--shadow-glow-success);
+  }
+}
