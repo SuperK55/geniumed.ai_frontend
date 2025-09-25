@@ -21,8 +21,17 @@ interface Doctor {
   is_active: boolean;
   created_at: string;
   consultation_price?: number;
+  return_consultation_price?: number;
+  consultation_duration?: number;
   bio?: string;
   tags?: string[];
+  languages?: string[];
+  telemedicine_available?: boolean;
+  working_hours?: any;
+  timezone?: string;
+  office_address?: string;
+  city?: string;
+  state?: string;
 }
 
 interface DoctorFormData {
@@ -31,8 +40,15 @@ interface DoctorFormData {
   phone: string;
   specialty: string;
   consultation_fee: string;
+  return_consultation_fee: string;
+  consultation_duration: string;
   bio: string;
   tags: string[];
+  languages: string[];
+  telemedicine_available: boolean;
+  office_address: string;
+  city: string;
+  state: string;
 }
 
 const MEDICAL_SPECIALTIES = [
@@ -103,8 +119,15 @@ const Doctors = () => {
     phone: '',
     specialty: '',
     consultation_fee: '',
+    return_consultation_fee: '',
+    consultation_duration: '90',
     bio: '',
-    tags: []
+    tags: [],
+    languages: ['Português'],
+    telemedicine_available: false,
+    office_address: '',
+    city: '',
+    state: ''
   });
   // const { toast } = useToast();
 
@@ -155,8 +178,15 @@ const Doctors = () => {
       phone: '',
       specialty: '',
       consultation_fee: '',
+      return_consultation_fee: '',
+      consultation_duration: '90',
       bio: '',
-      tags: []
+      tags: [],
+      languages: ['Português'],
+      telemedicine_available: false,
+      office_address: '',
+      city: '',
+      state: ''
     });
     setEditingDoctor(null);
   };
@@ -167,6 +197,12 @@ const Doctors = () => {
     
     try {
       const token = localStorage.getItem('auth_token');
+      
+      if (!token) {
+        alert('No authentication token found. Please sign in again.');
+        return;
+      }
+      
       const url = editingDoctor ? `/api/doctors/${editingDoctor.id}` : '/api/doctors';
       const method = editingDoctor ? 'PUT' : 'POST';
 
@@ -177,7 +213,15 @@ const Doctors = () => {
         specialty: formData.specialty,
         bio: formData.bio,
         tags: formData.tags,
+        languages: formData.languages,
         consultation_price: formData.consultation_fee ? parseFloat(formData.consultation_fee) : undefined,
+        return_consultation_price: formData.return_consultation_fee ? parseFloat(formData.return_consultation_fee) : undefined,
+        consultation_duration: formData.consultation_duration ? parseInt(formData.consultation_duration) : 90,
+        telemedicine_available: formData.telemedicine_available,
+        office_address: formData.office_address,
+        city: formData.city,
+        state: formData.state,
+        timezone: 'America/Sao_Paulo',
         owner_id: user?.id
       };
 
@@ -189,7 +233,7 @@ const Doctors = () => {
         },
         body: JSON.stringify(payload)
       });
-
+      
       if (response.ok) {
         // toast({
         //   title: "Success",
@@ -199,15 +243,12 @@ const Doctors = () => {
         setShowAddDialog(false);
         fetchDoctors();
       } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save doctor');
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || 'Failed to save doctor'}`);
       }
     } catch (error) {
-      // toast({
-      //   title: "Error",
-      //   description: error instanceof Error ? error.message : "Failed to save doctor",
-      //   variant: "destructive"
-      // });
+      console.error('Submit error:', error);
+      alert('Network error. Please try again.');
     }
   };
 
@@ -250,8 +291,15 @@ const Doctors = () => {
       phone: doctor.phone_number,
       specialty: doctor.specialty,
       consultation_fee: doctor.consultation_price?.toString() || '',
+      return_consultation_fee: doctor.return_consultation_price?.toString() || '',
+      consultation_duration: doctor.consultation_duration?.toString() || '90',
       bio: doctor.bio || '',
-      tags: doctor.tags || []
+      tags: doctor.tags || [],
+      languages: doctor.languages || ['Português'],
+      telemedicine_available: doctor.telemedicine_available || false,
+      office_address: doctor.office_address || '',
+      city: doctor.city || '',
+      state: doctor.state || ''
     });
     setShowAddDialog(true);
   };
@@ -279,7 +327,7 @@ const Doctors = () => {
               Add Doctor
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingDoctor ? 'Edit Doctor' : 'Add New Doctor'}
@@ -354,6 +402,16 @@ const Doctors = () => {
                 onChange={(tags) => setFormData({ ...formData, tags })}
                 placeholder="Add skill"
               />
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Languages</label>
+                <Input
+                  value={formData.languages.join(', ')}
+                  onChange={(e) => setFormData({ ...formData, languages: e.target.value.split(',').map(lang => lang.trim()).filter(lang => lang) })}
+                  placeholder="Português, English, Spanish"
+                />
+                <p className="text-xs text-gray-500 mt-1">Separate languages with commas</p>
+              </div>
               
               <div>
                 <label className="block text-sm font-medium mb-1">Consultation Fee</label>
@@ -364,6 +422,68 @@ const Doctors = () => {
                   onChange={(e) => setFormData({ ...formData, consultation_fee: e.target.value })}
                   placeholder="150.00"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Return Consultation Fee</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.return_consultation_fee}
+                  onChange={(e) => setFormData({ ...formData, return_consultation_fee: e.target.value })}
+                  placeholder="100.00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Consultation Duration (minutes)</label>
+                <Input
+                  type="number"
+                  value={formData.consultation_duration}
+                  onChange={(e) => setFormData({ ...formData, consultation_duration: e.target.value })}
+                  placeholder="90"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="telemedicine"
+                  checked={formData.telemedicine_available}
+                  onChange={(e) => setFormData({ ...formData, telemedicine_available: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="telemedicine" className="text-sm font-medium">
+                  Telemedicine Available
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Office Address</label>
+                <Input
+                  value={formData.office_address}
+                  onChange={(e) => setFormData({ ...formData, office_address: e.target.value })}
+                  placeholder="Rua das Flores, 123"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">City</label>
+                  <Input
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="São Paulo"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">State</label>
+                  <Input
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    placeholder="SP"
+                  />
+                </div>
               </div>
 
               <div>
@@ -478,6 +598,24 @@ const Doctors = () => {
                 <p><span className="font-medium">Phone:</span> {doctor.phone_number}</p>
                 {doctor.consultation_price && (
                   <p><span className="font-medium">Fee:</span> R$ {doctor.consultation_price}</p>
+                )}
+                {doctor.return_consultation_price && (
+                  <p><span className="font-medium">Return Fee:</span> R$ {doctor.return_consultation_price}</p>
+                )}
+                {doctor.consultation_duration && (
+                  <p><span className="font-medium">Duration:</span> {doctor.consultation_duration} min</p>
+                )}
+                {doctor.telemedicine_available && (
+                  <p><span className="font-medium">Telemedicine:</span> Available</p>
+                )}
+                {doctor.office_address && (
+                  <p><span className="font-medium">Address:</span> {doctor.office_address}</p>
+                )}
+                {(doctor.city || doctor.state) && (
+                  <p><span className="font-medium">Location:</span> {doctor.city}{doctor.city && doctor.state ? ', ' : ''}{doctor.state}</p>
+                )}
+                {doctor.languages && doctor.languages.length > 0 && (
+                  <p><span className="font-medium">Languages:</span> {doctor.languages.join(', ')}</p>
                 )}
                 {doctor.tags && doctor.tags.length > 0 && (
                   <div className="mt-2">
