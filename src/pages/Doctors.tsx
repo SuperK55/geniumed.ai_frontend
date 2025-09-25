@@ -267,18 +267,43 @@ const Doctors = () => {
       if (response.ok) {
         // toast({
         //   title: "Success",
-        //   description: "Doctor deactivated successfully"
+        //   description: "Doctor permanently deleted"
         // });
         fetchDoctors();
       } else {
-        throw new Error('Failed to deactivate doctor');
+        throw new Error('Failed to delete doctor');
       }
     } catch (error) {
       // toast({
       //   title: "Error",
-      //   description: "Failed to deactivate doctor",
+      //   description: "Failed to delete doctor",
       //   variant: "destructive"
       // });
+    }
+  };
+
+  // Handle status toggle
+  const handleStatusToggle = async (doctorId: string, currentStatus: boolean) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/doctors/${doctorId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          is_active: !currentStatus
+        })
+      });
+
+      if (response.ok) {
+        fetchDoctors();
+      } else {
+        throw new Error('Failed to update doctor status');
+      }
+    } catch (error) {
+      console.error('Error updating doctor status:', error);
     }
   };
 
@@ -587,9 +612,19 @@ const Doctors = () => {
                   <CardTitle className="text-lg">{doctor.name}</CardTitle>
                   <p className="text-sm text-gray-600">{doctor.specialty}</p>
                 </div>
-                <Badge variant={doctor.is_active ? "default" : "secondary"}>
-                  {doctor.is_active ? "Active" : "Inactive"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    {doctor.is_active ? "Active" : "Inactive"}
+                  </span>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={doctor.is_active}
+                      onChange={() => handleStatusToggle(doctor.id, doctor.is_active)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -655,18 +690,18 @@ const Doctors = () => {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Deactivate Doctor</AlertDialogTitle>
+                      <AlertDialogTitle>Delete Doctor</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to deactivate Dr. {doctor.name}? This will make them unavailable for new appointments.
+                        Are you sure you want to permanently delete Dr. {doctor.name}? This action cannot be undone and will remove all doctor data from the system.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete(doctor.id)}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
-                        Deactivate
+                        Delete Permanently
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
