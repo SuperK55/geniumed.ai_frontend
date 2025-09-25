@@ -44,7 +44,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Remove browser autocomplete yellow styling */
+  /* AGGRESSIVE: Remove ALL browser autocomplete yellow styling */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
@@ -53,18 +53,151 @@
   textarea:-webkit-autofill:hover,
   textarea:-webkit-autofill:focus,
   textarea:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px white inset !important;
-    -webkit-text-fill-color: #000 !important;
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #000000 !important;
     background-color: white !important;
     background-image: none !important;
+    color: #000000 !important;
+    transition: background-color 5000s ease-in-out 0s !important;
   }
 
-  /* Override any yellow focus outlines */
+  /* Force white background and consistent text color on all inputs and textareas */
+  input[type="text"],
+  input[type="email"], 
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  [data-radix-select-trigger],
+  [role="combobox"] {
+    background-color: white !important;
+    background-image: none !important;
+    color: #111827 !important;
+  }
+
+  /* Override any yellow focus outlines and backgrounds */
   input:focus,
-  textarea:focus {
+  textarea:focus,
+  input:focus-visible,
+  textarea:focus-visible,
+  [data-radix-select-trigger]:focus,
+  [role="combobox"]:focus {
     outline: none !important;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     border-color: #2563eb !important;
+    background-color: white !important;
+    background-image: none !important;
+    color: #111827 !important;
+  }
+
+  /* Specifically target profile page inputs */
+  #name,
+  #specialty,
+  #about_me,
+  #current-password,
+  #new-password,
+  #confirm-password {
+    background-color: white !important;
+    background-image: none !important;
+    color: #000000 !important;
+  }
+
+  #name:focus,
+  #specialty:focus,
+  #about_me:focus,
+  #current-password:focus,
+  #new-password:focus,
+  #confirm-password:focus {
+    background-color: white !important;
+    background-image: none !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    border-color: #2563eb !important;
+  }
+
+  /* AGGRESSIVE: Remove ALL yellow styling from Select components */
+  [data-radix-select-trigger],
+  [data-radix-select-trigger]:focus,
+  [data-radix-select-trigger]:focus-visible,
+  [data-radix-select-trigger]:hover,
+  [data-radix-select-trigger]:active,
+  [data-radix-select-trigger]:focus-within,
+  [data-radix-select-trigger][data-state="open"],
+  [data-radix-select-trigger][data-state="closed"],
+  [data-radix-select-trigger][aria-expanded="true"],
+  [data-radix-select-trigger][aria-expanded="false"] {
+    background-color: white !important;
+    background-image: none !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: #e2e8f0 !important;
+    outline-color: transparent !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+  }
+
+  [data-radix-select-trigger]:focus,
+  [data-radix-select-trigger]:focus-visible {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    border-color: #2563eb !important;
+    outline: none !important;
+  }
+
+  /* Target ALL possible select-related elements */
+  button[role="combobox"],
+  div[role="combobox"],
+  input[role="combobox"],
+  [role="combobox"],
+  button[role="combobox"]:focus,
+  div[role="combobox"]:focus,
+  input[role="combobox"]:focus,
+  [role="combobox"]:focus,
+  button[role="combobox"]:focus-visible,
+  div[role="combobox"]:focus-visible,
+  input[role="combobox"]:focus-visible,
+  [role="combobox"]:focus-visible {
+    background-color: white !important;
+    background-image: none !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: #e2e8f0 !important;
+    outline-color: transparent !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+  }
+
+  /* Remove any browser autocomplete styling from select elements */
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #000000 !important;
+    background-color: white !important;
+    background-image: none !important;
+    color: #000000 !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+  }
+
+  /* Additional aggressive targeting for any yellow outlines/backgrounds */
+  * {
+    outline-color: transparent !important;
+  }
+
+  *:focus,
+  *:focus-visible,
+  *:focus-within {
+    outline-color: transparent !important;
+  }
+
+  /* Remove any possible validation styling */
+  input:invalid,
+  select:invalid,
+  textarea:invalid,
+  [role="combobox"]:invalid {
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: #e2e8f0 !important;
   }
   
   h1, h2, h3, h4, h5, h6 {

@@ -6,13 +6,15 @@ import {
   Users, 
   MessageSquare,
   Stethoscope,
-  Heart
+  Heart,
+  UserCheck
 } from 'lucide-react';
 import logo from '../../assets/imgs/logo.png';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Activity },
   { name: 'Voice Agents', href: '/voice-agents', icon: MessageSquare },
+  { name: 'Doctors', href: '/doctors', icon: UserCheck },
   { name: 'Patients', href: '/patients', icon: Users },
   { name: 'Appointments', href: '/appointments', icon: Calendar },
   { name: 'Consultations', href: '/consultations', icon: Stethoscope },

@@ -103,25 +103,6 @@ const Dashboard = () => {
 
         {/* Quick Actions & Alerts */}
         <div className="space-y-6">
-          {/* Critical Alerts */}
-          <Card className="shadow-sm border-red-200 bg-red-50 rounded-xl">
-            <CardHeader className="pb-4 bg-red-50">
-              <CardTitle className="flex items-center space-x-2 text-red-700">
-                <AlertTriangle className="w-5 h-5" />
-                <span>Critical Alerts</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 bg-red-50">
-              <div className="p-3 bg-white rounded-xl border border-red-200">
-                <div className="font-medium text-red-900">High Blood Pressure</div>
-                <div className="text-sm text-red-700">Patient: John Doe - 180/120 mmHg</div>
-              </div>
-              <div className="p-3 bg-white rounded-xl border border-red-200">
-                <div className="font-medium text-red-900">Missed Medication</div>
-                <div className="text-sm text-red-700">Patient: Jane Smith - 3 days</div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Quick Stats */}
           <Card className="shadow-sm border-gray-200 rounded-xl !bg-white">

@@ -4,6 +4,7 @@ import Sidebar from '../components/Layout/Sidebar';
 import Header from '../components/Layout/Header';
 import Dashboard from './Dashboard';
 import VoiceAgents from './VoiceAgents';
+import Doctors from './Doctors';
 import Profile from './Profile';
 
 const MedicalCRM = () => {
@@ -18,6 +19,7 @@ const MedicalCRM = () => {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="voice-agents" element={<VoiceAgents />} />
+            <Route path="doctors" element={<Doctors />} />
             <Route path="profile" element={<Profile />} />
             <Route path="patients" element={
               <div className="text-center py-12">
