@@ -624,7 +624,7 @@ const Doctors = () => {
                       {doctor.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-md"
+                          className="inline-block px-2 py-1 bg-gray-200 text-gray-800 text-xs rounded-md"
                         >
                           {tag}
                         </span>
