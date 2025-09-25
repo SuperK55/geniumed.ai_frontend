@@ -91,7 +91,7 @@ const MEDICAL_SPECIALTIES = [
 ];
 
 const Doctors = () => {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,6 +111,7 @@ const Doctors = () => {
   // Fetch doctors
   const fetchDoctors = async () => {
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/doctors', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -165,6 +166,7 @@ const Doctors = () => {
     e.preventDefault();
     
     try {
+      const token = localStorage.getItem('auth_token');
       const url = editingDoctor ? `/api/doctors/${editingDoctor.id}` : '/api/doctors';
       const method = editingDoctor ? 'PUT' : 'POST';
 
@@ -212,6 +214,7 @@ const Doctors = () => {
   // Handle doctor deletion
   const handleDelete = async (doctorId: string) => {
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/doctors/${doctorId}`, {
         method: 'DELETE',
         headers: {
