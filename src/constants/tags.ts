@@ -33,6 +33,8 @@ export const MEDICAL_TAGS = [
   "cirrose",
   "coagulação",
   "colesterol",
+  "coluna",
+  "cirurgia minimamente invasiva",
   "congênitas",
   "constipação",
   "corrimento",
