@@ -200,29 +200,28 @@
     color: #111827 !important;
   }
 
-  /* Ensure AlertDialog buttons have proper styling */
+  /* Simplified AlertDialog button styling */
   [data-radix-alert-dialog-content] button,
   .alert-dialog-content button {
-    background-color: white !important;
     background-image: none !important;
+  }
+
+  /* Default button styling for dialogs */
+  [data-radix-alert-dialog-content] button:not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-green"]),
+  .alert-dialog-content button:not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-green"]) {
+    background-color: white !important;
     border-color: #e2e8f0 !important;
   }
 
-  [data-radix-alert-dialog-content] button[data-state="open"],
-  .alert-dialog-content button[data-state="open"] {
-    background-color: #ef4444 !important;
-    color: white !important;
-  }
-
-  /* Ultra-aggressive AlertDialog styling to prevent any yellow */
-  [role="alertdialog"],
-  [role="alertdialog"] *,
-  [data-radix-alert-dialog-content],
-  [data-radix-alert-dialog-content] *,
-  [data-radix-alert-dialog-overlay],
-  [data-radix-alert-dialog-overlay] *,
-  div[role="alertdialog"],
-  div[role="alertdialog"] * {
+  /* Ultra-aggressive AlertDialog styling to prevent any yellow - but preserve button colors */
+  [role="alertdialog"]:not(button),
+  [role="alertdialog"] *:not(button),
+  [data-radix-alert-dialog-content]:not(button),
+  [data-radix-alert-dialog-content] *:not(button),
+  [data-radix-alert-dialog-overlay]:not(button),
+  [data-radix-alert-dialog-overlay] *:not(button),
+  div[role="alertdialog"]:not(button),
+  div[role="alertdialog"] *:not(button) {
     background-color: white !important;
     background-image: none !important;
     color: #111827 !important;

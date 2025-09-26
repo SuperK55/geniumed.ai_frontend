@@ -18,7 +18,6 @@ const navigation = [
   { name: 'Patients', href: '/patients', icon: Users },
   { name: 'Appointments', href: '/appointments', icon: Calendar },
   { name: 'Consultations', href: '/consultations', icon: Stethoscope },
-  { name: 'Follow-ups', href: '/follow-ups', icon: Heart },
 ];
 
 const Sidebar = () => {

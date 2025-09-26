@@ -699,7 +699,7 @@ const Doctors = () => {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete(doctor.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="bg-red-800 hover:bg-red-900 text-white"
                       >
                         Delete Permanently
                       </AlertDialogAction>
