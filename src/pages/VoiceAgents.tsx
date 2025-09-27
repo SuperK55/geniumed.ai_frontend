@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Bot, 
   Plus, 
@@ -41,90 +42,122 @@ import StatsCard from '@/components/Dashboard/StatsCard';
 
 interface VoiceAgent {
   id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'inactive' | 'training';
-  type: 'appointment' | 'follow-up' | 'screening' | 'general';
-  callsToday: number;
-  totalCalls: number;
-  successRate: number;
-  avgDuration: string;
-  lastActive: string;
+  agent_name: string;
+  agent_role: string;
+  service_description: string;
+  assistant_name: string;
+  script: {
+    greeting?: string;
+    service_description?: string;
+    availability?: string;
+  };
   language: string;
-  specialty: string;
+  voice_id: string;
+  ambient_sound: string;
+  is_active: boolean;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 const VoiceAgents = () => {
-  const [agents] = useState<VoiceAgent[]>([
-    {
-      id: '1',
-      name: 'Appointment Scheduler',
-      description: 'Handles appointment bookings and confirmations',
-      status: 'active',
-      type: 'appointment',
-      callsToday: 23,
-      totalCalls: 1247,
-      successRate: 89,
-      avgDuration: '3:45',
-      lastActive: '2 minutes ago',
-      language: 'English',
-      specialty: 'General Practice'
-    },
-    {
-      id: '2',
-      name: 'Follow-up Assistant',
-      description: 'Post-consultation follow-up calls and monitoring',
-      status: 'active',
-      type: 'follow-up',
-      callsToday: 15,
-      totalCalls: 892,
-      successRate: 94,
-      avgDuration: '5:12',
-      lastActive: '5 minutes ago',
-      language: 'English',
-      specialty: 'Cardiology'
-    }
-  ]);
+  const { user } = useAuth();
+  const [agents, setAgents] = useState<VoiceAgent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newAgent, setNewAgent] = useState({
-    name: '',
-    aboutMe: ''
+    agent_name: '',
+    agent_role: '',
+    service_description: '',
+    assistant_name: '',
+    script: {
+      greeting: '',
+      service_description: '',
+      availability: ''
+    }
   });
 
-  const handleCreateAgent = () => {
-    // TODO: Implement agent creation logic here
-    console.log('Creating new agent:', newAgent);
-    
-    // Reset form and close modal
-    setNewAgent({ name: '', aboutMe: '' });
-    setIsCreateModalOpen(false);
-  };
+  // Fetch agents from API
+  const fetchAgents = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
 
-  const getStatusBadge = (status: VoiceAgent['status']) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-success/10 text-success border-success/20">Active</Badge>;
-      case 'inactive':
-        return <Badge className="bg-gray-100 text-gray-600 border-gray-200">Inactive</Badge>;
-      case 'training':
-        return <Badge className="bg-accent/10 text-accent border-accent/20">Training</Badge>;
-      default:
-        return <Badge>Unknown</Badge>;
+      const response = await fetch('/api/agents', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAgents(data.agents || []);
+      }
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getTypeBadge = (type: VoiceAgent['type']) => {
-    const badges = {
-      appointment: { label: 'Appointment', className: 'bg-primary/10 text-primary border-primary/20' },
-      'follow-up': { label: 'Follow-up', className: 'bg-secondary/10 text-secondary border-secondary/20' },
-      screening: { label: 'Screening', className: 'bg-accent/10 text-accent border-accent/20' },
-      general: { label: 'General', className: 'bg-gray-100 text-gray-600 border-gray-200' }
-    };
-    
-    const badge = badges[type];
-    return <Badge className={badge.className}>{badge.label}</Badge>;
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  const handleCreateAgent = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('No authentication token found. Please sign in again.');
+        return;
+      }
+
+      const response = await fetch('/api/agents', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newAgent)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAgents([...agents, data.agent]);
+        resetForm();
+        setIsCreateModalOpen(false);
+        alert('Agent created successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Error creating agent: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating agent:', error);
+      alert('Error creating agent. Please try again.');
+    }
+  };
+
+  const resetForm = () => {
+    setNewAgent({
+      agent_name: '',
+      agent_role: '',
+      service_description: '',
+      assistant_name: '',
+      script: {
+        greeting: '',
+        service_description: '',
+        availability: ''
+      }
+    });
+  };
+
+  const getStatusBadge = (isActive: boolean) => {
+    return isActive 
+      ? <Badge className="bg-success/10 text-success border-success/20">Active</Badge>
+      : <Badge className="bg-gray-100 text-gray-600 border-gray-200">Inactive</Badge>;
   };
 
   return (
@@ -143,18 +176,18 @@ const VoiceAgents = () => {
               Create Agent
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-white border-gray-200">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white border-gray-200">
             <DialogHeader>
               <DialogTitle className="text-gray-900">Create New Voice Agent</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="agent_name">Agent Name</Label>
                 <Input
-                  id="name"
+                  id="agent_name"
                   placeholder="Enter agent name..."
-                  value={newAgent.name}
-                  onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })}
+                  value={newAgent.agent_name}
+                  onChange={(e) => setNewAgent({ ...newAgent, agent_name: e.target.value })}
                   className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
                   style={{ 
                     boxShadow: 'none',
@@ -163,13 +196,77 @@ const VoiceAgents = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="aboutMe">Role Description</Label>
+                <Label htmlFor="agent_role">Agent Role</Label>
+                <Input
+                  id="agent_role"
+                  placeholder="e.g., Medical Assistant, Receptionist..."
+                  value={newAgent.agent_role}
+                  onChange={(e) => setNewAgent({ ...newAgent, agent_role: e.target.value })}
+                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                  style={{ 
+                    boxShadow: 'none',
+                    WebkitBoxShadow: 'none'
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="service_description">Service Description</Label>
                 <Textarea
-                  id="aboutMe"
-                  placeholder="Describe the agent's role and capabilities..." 
-                  value={newAgent.aboutMe}
-                  onChange={(e) => setNewAgent({ ...newAgent, aboutMe: e.target.value })}
+                  id="service_description"
+                  placeholder="Describe the services offered..."
+                  value={newAgent.service_description}
+                  onChange={(e) => setNewAgent({ ...newAgent, service_description: e.target.value })}
                   rows={3}
+                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                  style={{ 
+                    boxShadow: 'none',
+                    WebkitBoxShadow: 'none'
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="assistant_name">Assistant Name</Label>
+                <Input
+                  id="assistant_name"
+                  placeholder="e.g., Clara, Maria..."
+                  value={newAgent.assistant_name}
+                  onChange={(e) => setNewAgent({ ...newAgent, assistant_name: e.target.value })}
+                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                  style={{ 
+                    boxShadow: 'none',
+                    WebkitBoxShadow: 'none'
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="greeting">Greeting Message</Label>
+                <Textarea
+                  id="greeting"
+                  placeholder="e.g., Olá! Como posso ajudá-lo hoje?"
+                  value={newAgent.script.greeting}
+                  onChange={(e) => setNewAgent({ 
+                    ...newAgent, 
+                    script: { ...newAgent.script, greeting: e.target.value }
+                  })}
+                  rows={2}
+                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                  style={{ 
+                    boxShadow: 'none',
+                    WebkitBoxShadow: 'none'
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="availability">Availability Message</Label>
+                <Textarea
+                  id="availability"
+                  placeholder="e.g., Estamos disponíveis de segunda a sexta, das 8h às 18h"
+                  value={newAgent.script.availability}
+                  onChange={(e) => setNewAgent({ 
+                    ...newAgent, 
+                    script: { ...newAgent.script, availability: e.target.value }
+                  })}
+                  rows={2}
                   className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
                   style={{ 
                     boxShadow: 'none',
@@ -188,7 +285,7 @@ const VoiceAgents = () => {
               </Button>
               <Button 
                 onClick={handleCreateAgent}
-                disabled={!newAgent.name || !newAgent.aboutMe}
+                disabled={!newAgent.agent_name || !newAgent.service_description}
                 className="bg-primary text-white hover:bg-primary/90"
               >
                 Create Agent
@@ -243,8 +340,8 @@ const VoiceAgents = () => {
                     <Bot className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-gray-900">{agent.name}</CardTitle>
-                    <CardDescription className="text-sm text-gray-600">{agent.description}</CardDescription>
+                    <CardTitle className="text-lg text-gray-900">{agent.agent_name}</CardTitle>
+                    <CardDescription className="text-sm text-gray-600">{agent.agent_role}</CardDescription>
                   </div>
                 </div>
                 
@@ -276,51 +373,54 @@ const VoiceAgents = () => {
               </div>
               
               <div className="flex items-center space-x-2 pt-2">
-                {getStatusBadge(agent.status)}
-                {getTypeBadge(agent.type)}
+                {getStatusBadge(agent.is_active)}
               </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Agent Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-gray-50 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{agent.callsToday}</div>
-                  <div className="text-xs text-gray-600">Calls Today</div>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{agent.successRate}%</div>
-                  <div className="text-xs text-gray-600">Success Rate</div>
-                </div>
-              </div>
-
               {/* Agent Details */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Calls:</span>
-                  <span className="font-medium text-gray-900">{agent.totalCalls.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Avg Duration:</span>
-                  <span className="font-medium text-gray-900">{agent.avgDuration}</span>
+                  <span className="text-gray-600">Assistant Name:</span>
+                  <span className="font-medium text-gray-900">{agent.assistant_name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Language:</span>
                   <span className="font-medium text-gray-900">{agent.language}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Specialty:</span>
-                  <span className="font-medium text-gray-900">{agent.specialty}</span>
+                  <span className="text-gray-600">Voice:</span>
+                  <span className="font-medium text-gray-900">{agent.voice_id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Last Active:</span>
-                  <span className="font-medium text-gray-900">{agent.lastActive}</span>
+                  <span className="text-gray-600">Ambient Sound:</span>
+                  <span className="font-medium text-gray-900">{agent.ambient_sound}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Published:</span>
+                  <span className="font-medium text-gray-900">{agent.is_published ? 'Yes' : 'No'}</span>
                 </div>
               </div>
 
+              {/* Service Description */}
+              {agent.service_description && (
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <div className="text-xs text-gray-600 mb-1">Service Description:</div>
+                  <div className="text-sm text-gray-900">{agent.service_description}</div>
+                </div>
+              )}
+
+              {/* Script Preview */}
+              {agent.script.greeting && (
+                <div className="p-3 bg-blue-50 rounded-xl">
+                  <div className="text-xs text-blue-600 mb-1">Greeting:</div>
+                  <div className="text-sm text-blue-900">{agent.script.greeting}</div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex space-x-2 pt-2">
-                {agent.status === 'active' ? (
+                {agent.is_active ? (
                   <Button 
                     variant="outline" 
                     size="sm" 
