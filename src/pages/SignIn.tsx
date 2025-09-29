@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Stethoscope } from 'lucide-react';
+import { notify } from '@/utils/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,23 +32,42 @@ const SignIn = () => {
 
       if (response.data.ok) {
         // Use the auth hook's login method
+        notify.success('Sign In Successful', {
+          description: 'Signed in successfully.',
+          duration: 4000
+        });
         login(response.data.token, response.data.user);
       } else {
         // Show error message
-        alert(response.data.error || 'Sign in failed');
+        notify.error('Sign In Failed', {
+          description: response.data.error || 'Invalid credentials. Please try again.',
+          duration: 5000
+        });
       }
     } catch (error: any) {
       console.error('Sign in error:', error);
       
       // Handle different types of errors
       if (error.response?.data?.error) {
-        alert(error.response.data.error);
+        notify.error('Sign In Failed', {
+          description: error.response.data.error || 'Invalid email or password.',
+          duration: 5000
+        });
       } else if (error.response?.status === 401) {
-        alert('Invalid email or password');
+        notify.error('Invalid Credentials', {
+          description: 'Invalid email or password. Please check your credentials.',
+          duration: 5000
+        });
       } else if (error.response?.status === 500) {
-        alert('Server error. Please try again later.');
+        notify.error('Server Error', {
+          description: 'Server error occurred. Please try again later.',
+          duration: 6000
+        });
       } else {
-        alert('Network error. Please check your connection.');
+        notify.error('Network Error', {
+          description: 'Network error occurred. Please check your connection.',
+          duration: 6000
+        });
       }
     } finally {
       setIsLoading(false);

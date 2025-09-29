@@ -190,6 +190,174 @@
     outline-color: transparent !important;
   }
 
+  /* Ensure dropdown menus have proper border styling */
+  [data-radix-dropdown-menu-content],
+  [data-radix-dropdown-menu-content] *,
+  [data-radix-dropdown-menu-sub-content],
+  [data-radix-dropdown-menu-sub-content] * {
+    border-color: #e2e8f0 !important;
+    background-color: white !important;
+    background-image: none !important;
+  }
+
+  /* Ensure tooltips work properly in modal contexts */
+  [data-radix-tooltip-content] {
+    z-index: 100 !important;
+    max-width: 400px !important;
+  }
+
+  /* Force tooltip positioning to avoid modal boundaries */
+  [data-radix-tooltip-content][data-side="left"] {
+    transform: translateX(-8px) !important;
+  }
+
+  [data-radix-tooltip-content][data-side="right"] {
+    transform: translateX(8px) !important;
+  }
+
+  [data-radix-tooltip-content][data-side="top"] {
+    transform: translateY(-8px) !important;
+  }
+
+  [data-radix-tooltip-content][data-side="bottom"] {
+    transform: translateY(8px) !important;
+  }
+
+  /* Fix modal scrollbar cutoff issue */
+  [data-radix-dialog-content] {
+    scrollbar-width: thin !important;
+    scrollbar-color: #d1d5db #f3f4f6 !important;
+    padding-right: 8px !important;
+  }
+
+  [data-radix-dialog-content]::-webkit-scrollbar {
+    width: 8px !important;
+  }
+
+  [data-radix-dialog-content]::-webkit-scrollbar-track {
+    background: #f3f4f6 !important;
+    border-radius: 4px !important;
+    margin: 4px 0 !important;
+  }
+
+  [data-radix-dialog-content]::-webkit-scrollbar-thumb {
+    background: #d1d5db !important;
+    border-radius: 4px !important;
+    border: 1px solid #f3f4f6 !important;
+    min-height: 20px !important;
+  }
+
+  [data-radix-dialog-content]::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af !important;
+  }
+
+  /* Ensure scrollbar has proper spacing and visibility */
+  [data-radix-dialog-content] {
+    box-sizing: border-box !important;
+    margin-right: 0 !important;
+  }
+
+  /* Enhanced scrollbar styling for modal content areas */
+  .scrollbar-thin {
+    scrollbar-width: thin !important;
+    scrollbar-color: #d1d5db #f3f4f6 !important;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px !important;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f3f4f6 !important;
+    border-radius: 4px !important;
+    margin: 8px 0 !important;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db !important;
+    border-radius: 4px !important;
+    border: 1px solid #f3f4f6 !important;
+    min-height: 20px !important;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af !important;
+  }
+
+  /* Ensure scrollable content has proper spacing */
+  .scrollbar-thin {
+    padding-right: 4px !important;
+    margin-right: 0 !important;
+  }
+
+  /* Fix notification colors - override any yellow styling */
+  [data-sonner-toast] {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+  }
+
+  [data-sonner-toast][data-type="success"] {
+    background-color: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+    color: #166534 !important;
+  }
+
+  [data-sonner-toast][data-type="error"] {
+    background-color: #fef2f2 !important;
+    border-color: #fecaca !important;
+    color: #dc2626 !important;
+  }
+
+  [data-sonner-toast][data-type="warning"] {
+    background-color: #fffbeb !important;
+    border-color: #fed7aa !important;
+    color: #d97706 !important;
+  }
+
+  [data-sonner-toast][data-type="info"] {
+    background-color: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #2563eb !important;
+  }
+
+  /* Override any aggressive yellow removal for notifications */
+  [data-sonner-toast] *,
+  [data-sonner-toast]:focus,
+  [data-sonner-toast]:focus-visible {
+    background-image: none !important;
+    outline: none !important;
+  }
+
+  /* Ensure notification icons have proper colors */
+  [data-sonner-toast][data-type="success"] [data-icon] {
+    color: #16a34a !important;
+  }
+
+  [data-sonner-toast][data-type="error"] [data-icon] {
+    color: #dc2626 !important;
+  }
+
+  [data-sonner-toast][data-type="warning"] [data-icon] {
+    color: #d97706 !important;
+  }
+
+  [data-sonner-toast][data-type="info"] [data-icon] {
+    color: #2563eb !important;
+  }
+
+  /* Ensure notification container positioning */
+  [data-sonner-toaster] {
+    z-index: 9999 !important;
+  }
+
+  /* Override any potential conflicts with notification text */
+  [data-sonner-toast] [data-title],
+  [data-sonner-toast] [data-description] {
+    background: transparent !important;
+    background-image: none !important;
+  }
+
   /* Fix AlertDialog yellow background issue */
   [data-radix-alert-dialog-content],
   [data-radix-alert-dialog-content] *,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { notify } from '@/utils/notifications';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +65,15 @@ const Profile = () => {
   const handleProfileSave = async () => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
+      
+      if (!token) {
+        notify.error('Authentication Required', {
+          description: 'No authentication token found. Please sign in again.',
+          duration: 5000
+        });
+        return;
+      }
       
       // Send simplified fields directly - no mapping needed
       const updateData = {
@@ -85,13 +94,22 @@ const Profile = () => {
         // Update user context directly
         updateUser(response.data.user);
         setIsEditing(false);
-        alert('Profile updated successfully!');
+        notify.success('Profile Updated Successfully!', {
+          description: 'Your profile information has been saved.',
+          duration: 4000
+        });
       } else {
-        alert('Failed to update profile: ' + response.data.error);
+        notify.error('Failed to Update Profile', {
+          description: response.data.error || 'An unexpected error occurred.',
+          duration: 6000
+        });
       }
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile: ' + (error.response?.data?.error || error.message));
+      notify.error('Failed to Update Profile', {
+        description: error.response?.data?.error || error.message || 'Network error occurred.',
+        duration: 6000
+      });
     } finally {
       setIsSaving(false);
     }
@@ -99,18 +117,32 @@ const Profile = () => {
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match');
+      notify.warning('Password Mismatch', {
+        description: 'New passwords do not match. Please try again.',
+        duration: 4000
+      });
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      alert('New password must be at least 8 characters long');
+      notify.warning('Password Too Short', {
+        description: 'New password must be at least 8 characters long.',
+        duration: 4000
+      });
       return;
     }
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
+      
+      if (!token) {
+        notify.error('Authentication Required', {
+          description: 'No authentication token found. Please sign in again.',
+          duration: 5000
+        });
+        return;
+      }
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/auth/change-password`,
         {
@@ -125,13 +157,22 @@ const Profile = () => {
       if (response.data.ok) {
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         setIsPasswordModalOpen(false);
-        alert('Password changed successfully!');
+        notify.success('Password Changed Successfully!', {
+          description: 'Your password has been updated.',
+          duration: 4000
+        });
       } else {
-        alert('Failed to change password: ' + response.data.error);
+        notify.error('Failed to Change Password', {
+          description: response.data.error || 'An unexpected error occurred.',
+          duration: 6000
+        });
       }
     } catch (error: any) {
       console.error('Error changing password:', error);
-      alert('Failed to change password: ' + (error.response?.data?.error || error.message));
+      notify.error('Failed to Change Password', {
+        description: error.response?.data?.error || error.message || 'Network error occurred.',
+        duration: 6000
+      });
     } finally {
       setIsLoading(false);
     }

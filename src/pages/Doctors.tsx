@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, UserX, UserCheck, Users } from 'lucide-react';
+import { notify } from '@/utils/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -199,7 +200,10 @@ const Doctors = () => {
       const token = localStorage.getItem('auth_token');
       
       if (!token) {
-        alert('No authentication token found. Please sign in again.');
+        notify.error('Authentication Required', {
+          description: 'No authentication token found. Please sign in again.',
+          duration: 5000
+        });
         return;
       }
       
@@ -244,11 +248,17 @@ const Doctors = () => {
         fetchDoctors();
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.error || 'Failed to save doctor'}`);
+        notify.error('Error Saving Doctor', {
+          description: errorData.error || 'Failed to save doctor information.',
+          duration: 6000
+        });
       }
     } catch (error) {
       console.error('Submit error:', error);
-      alert('Network error. Please try again.');
+      notify.error('Network Error', {
+        description: 'Network error occurred. Please check your connection and try again.',
+        duration: 6000
+      });
     }
   };
 
