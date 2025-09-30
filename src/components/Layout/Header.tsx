@@ -28,30 +28,18 @@ const Header = () => {
       <div className="flex items-center justify-end px-6 h-full">
         {/* Right Section */}
         <div className="flex items-center space-x-4">
-          {/* Quick Stats */}
-          <div className="hidden md:flex items-center space-x-6">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-gray-900">24</div>
-              <div className="text-xs text-gray-500">Today's Appointments</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-secondary">12</div>
-              <div className="text-xs text-gray-500">Pending Follow-ups</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-gray-600">3</div>
-              <div className="text-xs text-gray-500">Urgent Cases</div>
-            </div>
-          </div>
+          
 
-          {/* Divider */}
-          <div className="hidden md:block w-px h-8 bg-gray-200"></div>
+          
 
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative rounded-xl">
             <Bell className="w-5 h-5 text-gray-600" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
           </Button>
+
+          {/* Divider */}
+          <div className="hidden md:block w-px h-8 bg-gray-200"></div>
 
           {/* User Menu */}
           <DropdownMenu>

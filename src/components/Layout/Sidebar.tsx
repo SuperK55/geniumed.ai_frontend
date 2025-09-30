@@ -7,13 +7,15 @@ import {
   MessageSquare,
   Stethoscope,
   Heart,
-  UserCheck
+  UserCheck,
+  Phone
 } from 'lucide-react';
 import logo from '../../assets/imgs/logo.png';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Activity },
   { name: 'Voice Agents', href: '/voice-agents', icon: MessageSquare },
+  { name: 'Call Logs', href: '/call-logs', icon: Phone },
   { name: 'Doctors', href: '/doctors', icon: UserCheck },
   { name: 'Patients', href: '/patients', icon: Users },
   { name: 'Appointments', href: '/appointments', icon: Calendar },

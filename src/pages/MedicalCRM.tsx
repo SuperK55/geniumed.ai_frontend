@@ -4,6 +4,7 @@ import Sidebar from '../components/Layout/Sidebar';
 import Header from '../components/Layout/Header';
 import Dashboard from './Dashboard';
 import VoiceAgents from './VoiceAgents';
+import CallLogs from './CallLogs';
 import Doctors from './Doctors';
 import Profile from './Profile';
 
@@ -19,6 +20,7 @@ const MedicalCRM = () => {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="voice-agents" element={<VoiceAgents />} />
+            <Route path="call-logs" element={<CallLogs />} />
             <Route path="doctors" element={<Doctors />} />
             <Route path="profile" element={<Profile />} />
             <Route path="patients" element={

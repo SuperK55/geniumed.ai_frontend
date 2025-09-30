@@ -104,6 +104,7 @@ const VoiceAgents = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<AgentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [defaultAgent, setDefaultAgent] = useState<VoiceAgent | null>(null);
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -161,11 +162,146 @@ const VoiceAgents = () => {
       if (response.ok) {
         const data = await response.json();
         setAgents(data.agents || []);
+        
+        // Fetch default agent after agents are loaded
+        if (data.agents && data.agents.length > 0) {
+          await fetchDefaultAgentAfterAgents(data.agents);
+        }
       }
     } catch (error) {
       console.error('Error fetching agents:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch default agent
+  const fetchDefaultAgent = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/agents/get/default', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.defaultAgent) {
+          // Find the agent in our agents list
+          const agent = agents.find(a => a.id === data.defaultAgent.id);
+          setDefaultAgent(agent || null);
+        } else {
+          setDefaultAgent(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching default agent:', error);
+    }
+  };
+
+  // Fetch default agent after agents are loaded
+  const fetchDefaultAgentAfterAgents = async (agentsList: VoiceAgent[]) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/agents/get/default', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.defaultAgent) {
+          // Find the agent in the provided agents list
+          const agent = agentsList.find(a => a.id === data.defaultAgent.id);
+          setDefaultAgent(agent || null);
+        } else {
+          setDefaultAgent(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching default agent:', error);
+    }
+  };
+
+  // Set default agent
+  const setDefaultAgentHandler = async (agentId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch(`/api/agents/default/${agentId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const agent = agents.find(a => a.id === agentId);
+        setDefaultAgent(agent || null);
+        notify.success('Default Agent Updated', {
+          description: `${data.defaultAgent.name} is now your default agent.`,
+          duration: 4000
+        });
+      } else {
+        const errorData = await response.json();
+        notify.error('Failed to Set Default Agent', {
+          description: errorData.error || 'Unknown error occurred.',
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Error setting default agent:', error);
+      notify.error('Failed to Set Default Agent', {
+        description: 'Network error occurred.',
+        duration: 4000
+      });
+    }
+  };
+
+  // Remove default agent
+  const removeDefaultAgent = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/agents/default', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setDefaultAgent(null);
+        notify.success('Default Agent Removed', {
+          description: 'No default agent is set.',
+          duration: 4000
+        });
+      } else {
+        const errorData = await response.json();
+        notify.error('Failed to Remove Default Agent', {
+          description: errorData.error || 'Unknown error occurred.',
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Error removing default agent:', error);
+      notify.error('Failed to Remove Default Agent', {
+        description: 'Network error occurred.',
+        duration: 4000
+      });
     }
   };
 
@@ -198,6 +334,7 @@ const VoiceAgents = () => {
     fetchStats();
   }, []);
 
+
   const handleCreateAgent = async () => {
     try {
       const token = localStorage.getItem('auth_token');
@@ -209,7 +346,7 @@ const VoiceAgents = () => {
         return;
       }
 
-      const response = await fetch('/api/agents', {
+      const response = await fetch('/agents', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -220,7 +357,15 @@ const VoiceAgents = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setAgents([...agents, data.agent]);
+        const updatedAgents = [...agents, data.agent];
+        setAgents(updatedAgents);
+        
+        // If this is the first agent, it will be set as default automatically
+        // Check if this agent should be the default
+        if (agents.length === 0) {
+          setDefaultAgent(data.agent);
+        }
+        
         resetForm();
         setIsCreateModalOpen(false);
         // Refresh stats after creating an agent
@@ -349,7 +494,7 @@ const VoiceAgents = () => {
         phone: testLead.phone, // Use the phone number from the form
         whatsapp: `whatsapp:${testLead.phone}`, // Use the same phone number for WhatsApp
         test_mode: true,
-        agent_id: selectedAgentForTest.id
+        owner_id: user?.id // Use the current user's ID to find their agents
       };
 
       const response = await fetch('/api/lead/submit', {
@@ -593,7 +738,7 @@ const VoiceAgents = () => {
                         <div className="space-y-2">
                           <p className="font-medium text-gray-900">Sample Availability Sentences:</p>
                           <ul className="text-sm space-y-1 text-gray-700">
-                            <li>A agenda dele está bem cheia no momento, mas tenho uma vaga disponível para {`{{initial_appointment_date}}`}. Gostaria que eu reservasse essa vaga para você?</li>
+                            <li>O {`{{doctor_name}}`} é muito procurado, e por isso a agenda dele está bastante concorrida. Atualmente, o primeiro horário disponível é apenas {`{{initial_appointment_date}}`}. Você gostaria que eu reservasse essa vaga para você?</li>
                           </ul>
                         </div>
                       </TooltipContent>
@@ -635,7 +780,7 @@ const VoiceAgents = () => {
                         <div className="space-y-2">
                           <p className="font-medium text-gray-900">Sample How the service works Sentences:</p>
                           <ul className="text-sm space-y-1 text-gray-700">
-                            <li>A consulta com o {`{{doctor_name}}`} tem duração média de 1,5 hora para um atendimento atencioso e personalizado. O valor é de {`{{price_first}}`} e inclui um retorno em 30 dias. Se você tiver plano de saúde, emitiremos uma nota para reembolso.</li>
+                            <li>A consulta do {`{{doctor_name}}`} é diferenciada, com duração média de 1 hora e meia, para avaliar seu caso com calma. Ela inclui um retorno dentro de 30 dias, sem custo adicional. E, caso você precise, emitimos nota fiscal para solicitação de reembolso no seu plano de saúde. O valor da primeira consulta é de {`{{consultation_price}}`}. Posso confirmar sua consulta, ou você tem alguma dúvida? • Se o usuário achar caro: "Entendo. Temos a opção de parcelar em até quatro vezes no seu cartão."</li>
                           </ul>
                         </div>
                       </TooltipContent>
@@ -1139,6 +1284,11 @@ const VoiceAgents = () => {
               
               <div className="flex items-center space-x-2 pt-2">
                 {getStatusBadge(agent.is_active)}
+                {defaultAgent?.id === agent.id && (
+                  <Badge className="bg-blue-100 text-blue-600 border-blue-200">
+                    Default
+                  </Badge>
+                )}
               </div>
             </CardHeader>
 
@@ -1184,25 +1334,27 @@ const VoiceAgents = () => {
                   <TestTube className="w-4 h-4 mr-2" />
                   Test
                 </Button>
-                {agent.is_active ? (
+                {defaultAgent?.id === agent.id ? (
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1 rounded-xl border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-800 focus:bg-gray-50 focus:text-gray-800 focus:border-gray-400"
-                    style={{ backgroundColor: 'white', borderColor: '#d1d5db' }}
+                    className="flex-1 rounded-xl border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 hover:text-orange-800 focus:bg-orange-100 focus:text-orange-800 focus:border-orange-400"
+                    style={{ backgroundColor: '#fef3c7', borderColor: '#f59e0b' }}
+                    onClick={() => removeDefaultAgent()}
                   >
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause
+                    <Settings className="w-4 h-4 mr-2" />
+                    Remove Default
                   </Button>
                 ) : (
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1 rounded-xl border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-800 focus:bg-gray-50 focus:text-gray-800 focus:border-gray-400"
-                    style={{ backgroundColor: 'white', borderColor: '#d1d5db' }}
+                    className="flex-1 rounded-xl border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 focus:bg-blue-100 focus:text-blue-800 focus:border-blue-400"
+                    style={{ backgroundColor: '#eff6ff', borderColor: '#3b82f6' }}
+                    onClick={() => setDefaultAgentHandler(agent.id)}
                   >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start
+                    <Settings className="w-4 h-4 mr-2" />
+                    Set as Default
                   </Button>
                 )}
                 {/* <Button 
