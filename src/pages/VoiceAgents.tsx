@@ -35,6 +35,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import VariableTextEditor from '@/components/ui/VariableTextEditor';
+import { GREETING_VARIABLES, SERVICE_DESCRIPTION_VARIABLES, AVAILABILITY_VARIABLES } from '@/constants/variables';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +59,18 @@ interface VoiceAgent {
   agent_role: string;
   service_description: string;
   assistant_name: string;
+  // Consultation / Service configuration
+  return_policy_days?: number;
+  reimbursement_invoice_enabled?: boolean;
+  payment_methods?: {
+    credit_card_installments?: number;
+    pix_enabled?: boolean;
+  };
+  confirmation_channel?: 'whatsapp' | 'sms' | 'email';
+  // Agent settings
+  sent_paymentlink?: boolean;
+  apply_discount_consultancy_pix?: boolean;
+  discount_percentage_pix?: number;
   script: {
     greeting?: string;
     service_description?: string;
@@ -129,6 +145,18 @@ const VoiceAgents = () => {
     agent_role: '',
     service_description: '',
     assistant_name: '',
+    // Consultation / Service configuration
+    return_policy_days: 30,
+    reimbursement_invoice_enabled: false,
+    payment_methods: {
+      credit_card_installments: 4,
+      pix_enabled: true
+    },
+    confirmation_channel: 'whatsapp' as 'whatsapp' | 'sms' | 'email',
+    // Agent settings
+    sent_paymentlink: false,
+    apply_discount_consultancy_pix: false,
+    discount_percentage_pix: 0,
     script: {
       greeting: '',
       service_description: '',
@@ -139,6 +167,18 @@ const VoiceAgents = () => {
     agent_name: '',
     agent_role: '',
     assistant_name: '',
+    // Consultation / Service configuration
+    return_policy_days: 30,
+    reimbursement_invoice_enabled: false,
+    payment_methods: {
+      credit_card_installments: 4,
+      pix_enabled: true
+    },
+    confirmation_channel: 'whatsapp' as 'whatsapp' | 'sms' | 'email',
+    // Agent settings
+    sent_paymentlink: false,
+    apply_discount_consultancy_pix: false,
+    discount_percentage_pix: 0,
     script: {
       greeting: '',
       service_description: '',
@@ -346,7 +386,7 @@ const VoiceAgents = () => {
         return;
       }
 
-      const response = await fetch('/agents', {
+      const response = await fetch('/api/agents', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -396,6 +436,18 @@ const VoiceAgents = () => {
       agent_role: '',
       service_description: '',
       assistant_name: '',
+      // Consultation / Service configuration
+      return_policy_days: 30,
+      reimbursement_invoice_enabled: false,
+      payment_methods: {
+        credit_card_installments: 4,
+        pix_enabled: true
+      },
+      confirmation_channel: 'whatsapp' as 'whatsapp' | 'sms' | 'email',
+      // Agent settings
+      sent_paymentlink: false,
+      apply_discount_consultancy_pix: false,
+      discount_percentage_pix: 0,
       script: {
         greeting: '',
         service_description: '',
@@ -551,6 +603,18 @@ const VoiceAgents = () => {
       agent_name: agent.agent_name,
       agent_role: agent.agent_role,
       assistant_name: (agent as any).assistant_name || 'Clara',
+      // Consultation / Service configuration
+      return_policy_days: agent.return_policy_days || 30,
+      reimbursement_invoice_enabled: agent.reimbursement_invoice_enabled || false,
+      payment_methods: {
+        credit_card_installments: agent.payment_methods?.credit_card_installments || 4,
+        pix_enabled: agent.payment_methods?.pix_enabled ?? true
+      },
+      confirmation_channel: agent.confirmation_channel || 'whatsapp',
+      // Agent settings
+      sent_paymentlink: agent.sent_paymentlink ?? false,
+      apply_discount_consultancy_pix: agent.apply_discount_consultancy_pix ?? false,
+      discount_percentage_pix: agent.discount_percentage_pix ?? 0,
       script: {
         greeting: agent.script?.greeting || '',
         service_description: agent.script?.service_description || '',
@@ -629,23 +693,21 @@ const VoiceAgents = () => {
               Create Agent
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white border-gray-200 overflow-visible pr-2">
+          <DialogContent className="sm:max-w-[900px] max-h-[85vh] bg-white border-gray-200 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="pr-4">
             <DialogHeader>
               <DialogTitle className="text-gray-900">Create New Voice Agent</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="">
+              <div className="grid gap-6 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="agent_name">Agent Name</Label>
+                <Label htmlFor="agent_name">Agent Name (Short name to identify this agent in lists.)</Label>
                 <Input
                   id="agent_name"
                   placeholder="Enter agent name..."
                   value={newAgent.agent_name}
                   onChange={(e) => setNewAgent({ ...newAgent, agent_name: e.target.value })}
                   className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
-                  style={{ 
-                    boxShadow: 'none',
-                    WebkitBoxShadow: 'none'
-                  }}
                 />
               </div>
               <div className="grid gap-2">
@@ -656,152 +718,232 @@ const VoiceAgents = () => {
                   value={newAgent.agent_role}
                   onChange={(e) => setNewAgent({ ...newAgent, agent_role: e.target.value })}
                   className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
-                  style={{ 
-                    boxShadow: 'none',
-                    WebkitBoxShadow: 'none'
-                  }}
                 />
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="assistant_name">Assistant Name</Label>
+                <Label htmlFor="assistant_name">Assistant Display Name</Label>
                 <Input
                   id="assistant_name"
                   placeholder="e.g., Clara, Maria..."
                   value={newAgent.assistant_name}
                   onChange={(e) => setNewAgent({ ...newAgent, assistant_name: e.target.value })}
                   className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
-                  style={{ 
-                    boxShadow: 'none',
-                    WebkitBoxShadow: 'none'
-                  }}
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="greeting">Greeting</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent 
-                        className="max-w-md w-max" 
-                        side="top"
-                        align="start"
-                        sideOffset={8}
-                        avoidCollisions={true}
-                        collisionPadding={16}
-                      >
-                        <div className="space-y-2">
-                          <p className="font-medium text-gray-900">Sample Greetings Sentences:</p>
-                          <ul className="text-sm space-y-1 text-gray-700">
-                            <li>Olá {`{{name}}`}, eu sou a Clara, assistente no consultório do {`{{doctor_name}}`}. Como você está hoje?</li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Textarea
+                <VariableTextEditor
                   id="greeting"
-                  placeholder="Describe the greeting"
+                  label="Greeting"
                   value={newAgent.script.greeting}
-                  onChange={(e) => setNewAgent({ 
+                  onChange={(value) => setNewAgent({ 
                     ...newAgent, 
-                    script: { ...newAgent.script, greeting: e.target.value }
+                    script: { ...newAgent.script, greeting: value }
                   })}
+                  placeholder="Describe the greeting"
+                  variables={GREETING_VARIABLES}
                   rows={2}
-                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
-                  style={{ 
-                    boxShadow: 'none',
-                    WebkitBoxShadow: 'none'
-                  }}
+                  tooltipContent={
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">Sample Greetings Sentences:</p>
+                      <ul className="text-sm space-y-1 text-gray-700">
+                        <li>Olá {`{{name}}`}, eu sou a Mariana aqui do consultório do Dr. XXX. Como você está hoje?</li>
+                      </ul>
+                    </div>
+                  }
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="availability">Availability</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent 
-                        className="max-w-md w-max" 
-                        side="top"
-                        align="start"
-                        sideOffset={8}
-                        avoidCollisions={true}
-                        collisionPadding={16}
-                      >
-                        <div className="space-y-2">
-                          <p className="font-medium text-gray-900">Sample Availability Sentences:</p>
-                          <ul className="text-sm space-y-1 text-gray-700">
-                            <li>O {`{{doctor_name}}`} é muito procurado, e por isso a agenda dele está bastante concorrida. Atualmente, o primeiro horário disponível é apenas {`{{initial_appointment_date}}`}. Você gostaria que eu reservasse essa vaga para você?</li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Textarea
+                <VariableTextEditor
                   id="availability"
-                  placeholder="Describe the availability"
+                  label="Availability"
                   value={newAgent.script.availability}
-                  onChange={(e) => setNewAgent({ 
+                  onChange={(value) => setNewAgent({ 
                     ...newAgent, 
-                    script: { ...newAgent.script, availability: e.target.value }
+                    script: { ...newAgent.script, availability: value }
                   })}
+                  placeholder="Describe the availability"
+                  variables={AVAILABILITY_VARIABLES}
                   rows={2}
-                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
-                  style={{ 
-                    boxShadow: 'none',
-                    WebkitBoxShadow: 'none'
-                  }}
+                  tooltipContent={
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">Sample Availability Sentences:</p>
+                      <ul className="text-sm space-y-1 text-gray-700">
+                        <li>• Exemplo 1 – Agenda lotada: A agenda do Dr. é muito concorrida e só tem disponibilidade daqui 30 dias {`{{initial_appointment_date}}`}.</li>
+                        <li>• Exemplo 2 – Agenda normal: Temos disponibilidade para os próximos dias, a data mais próxima é {`{{initial_appointment_date}}`}.</li>
+                      </ul>
+                    </div>
+                  }
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="service_description">How the service works</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent 
-                        className="max-w-md w-max" 
-                        side="top"
-                        align="start"
-                        sideOffset={8}
-                        avoidCollisions={true}
-                        collisionPadding={16}
-                      >
-                        <div className="space-y-2">
-                          <p className="font-medium text-gray-900">Sample How the service works Sentences:</p>
-                          <ul className="text-sm space-y-1 text-gray-700">
-                            <li>A consulta do {`{{doctor_name}}`} é diferenciada, com duração média de 1 hora e meia, para avaliar seu caso com calma. Ela inclui um retorno dentro de 30 dias, sem custo adicional. E, caso você precise, emitimos nota fiscal para solicitação de reembolso no seu plano de saúde. O valor da primeira consulta é de {`{{consultation_price}}`}. Posso confirmar sua consulta, ou você tem alguma dúvida? • Se o usuário achar caro: "Entendo. Temos a opção de parcelar em até quatro vezes no seu cartão."</li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Textarea
+                <VariableTextEditor
                   id="service_description"
-                  placeholder="Describe how the service works"
+                  label="How the service works"
                   value={newAgent.script.service_description}
-                  onChange={(e) => setNewAgent({
+                  onChange={(value) => setNewAgent({
                     ...newAgent, 
-                    script: { ...newAgent.script, service_description: e.target.value }
+                    script: { ...newAgent.script, service_description: value }
                   })}
+                  placeholder="Describe how the service works"
+                  variables={SERVICE_DESCRIPTION_VARIABLES}
                   rows={3}
-                  className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
-                  style={{ 
-                    boxShadow: 'none',
-                    WebkitBoxShadow: 'none'
-                  }}
+                  tooltipContent={
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">Sample How the service works Sentences:</p>
+                      <ul className="text-sm space-y-1 text-gray-700">
+                        <li>• Uma consulta com {`{{doctor_name}}`} dura em média {`{{consultation_duration}}`} minutos e oferece um atendimento atencioso e personalizado. O custo é de {`{{consultation_price}}`} e inclui uma consulta de acompanhamento em até {`{{return_policy_days}}`} dias.</li>
+                      </ul>
+                    </div>
+                  }
                 />
+              </div>
+
+              {/* Consultation / Service Configuration */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Consultation / Service Configuration</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="return_policy_days">Return Policy (days) — included follow-up</Label>
+                    <Input
+                      id="return_policy_days"
+                      type="number"
+                      placeholder="Number of days for a follow-up included (e.g., 30)"
+                      value={newAgent.return_policy_days}
+                      onChange={(e) => setNewAgent({ ...newAgent, return_policy_days: parseInt(e.target.value) || 30 })}
+                      className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="reimbursement_invoice_enabled">Reimbursement Invoice (On/Off)</Label>
+                      <Switch
+                        id="reimbursement_invoice_enabled"
+                        checked={newAgent.reimbursement_invoice_enabled}
+                        onCheckedChange={(checked) => setNewAgent({ ...newAgent, reimbursement_invoice_enabled: checked })}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600">If enabled, we inform the user invoice is available for insurance claims.</p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Payment Methods</Label>
+                    <p className="text-sm text-gray-600">Select accepted methods below.</p>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="credit_card_installments">Credit Card — Installments (1x to 10x)</Label>
+                      <Select
+                        value={newAgent.payment_methods.credit_card_installments.toString()}
+                        onValueChange={(value) => setNewAgent({ 
+                          ...newAgent, 
+                          payment_methods: { 
+                            ...newAgent.payment_methods, 
+                            credit_card_installments: parseInt(value) 
+                          } 
+                        })}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none">
+                          <SelectValue placeholder="Choose max installments (default 4x)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}x
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="pix_enabled">PIX (single payment)</Label>
+                        <Switch
+                          id="pix_enabled"
+                          checked={newAgent.payment_methods.pix_enabled}
+                          onCheckedChange={(checked) => setNewAgent({ 
+                            ...newAgent, 
+                            payment_methods: { 
+                              ...newAgent.payment_methods, 
+                              pix_enabled: checked 
+                            } 
+                          })}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600">Enable single payment via PIX.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="confirmation_channel">Confirmation Channel</Label>
+                    <Select
+                      value={newAgent.confirmation_channel}
+                      onValueChange={(value: 'whatsapp' | 'sms' | 'email') => setNewAgent({ ...newAgent, confirmation_channel: value })}
+                    >
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none">
+                        <SelectValue placeholder="Choose where confirmations are sent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        <SelectItem value="sms">SMS</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-gray-600">Choose where confirmations are sent: WhatsApp / SMS / Email.</p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="sent_paymentlink">Send Payment Link</Label>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sent_paymentlink"
+                        checked={newAgent.sent_paymentlink}
+                        onCheckedChange={(checked) => setNewAgent({ ...newAgent, sent_paymentlink: checked })}
+                      />
+                      <Label htmlFor="sent_paymentlink" className="text-sm text-gray-600">
+                        {newAgent.sent_paymentlink ? 'Automatically send payment links after booking' : 'Manually send payment links'}
+                      </Label>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="apply_discount_consultancy_pix">Apply Discount Consultancy for PIX</Label>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="apply_discount_consultancy_pix"
+                        checked={newAgent.apply_discount_consultancy_pix}
+                        onCheckedChange={(checked) => setNewAgent({ ...newAgent, apply_discount_consultancy_pix: checked })}
+                      />
+                      <Label htmlFor="apply_discount_consultancy_pix" className="text-sm text-gray-600">
+                        {newAgent.apply_discount_consultancy_pix ? 'Apply discount for PIX payments' : 'Use standard consultancy pricing'}
+                      </Label>
+                    </div>
+                    {newAgent.apply_discount_consultancy_pix && (
+                      <div className="mt-2">
+                        <Label htmlFor="discount_percentage_pix" className="text-sm font-medium text-gray-700">
+                          Discount Percentage
+                        </Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="discount_percentage_pix"
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={newAgent.discount_percentage_pix}
+                            onChange={(e) => setNewAgent({ ...newAgent, discount_percentage_pix: parseInt(e.target.value) || 0 })}
+                            className="w-20 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none"
+                            placeholder="5"
+                          />
+                          <span className="text-sm text-gray-600">%</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Enter discount percentage (1-100%)</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
               </div>
             </div>
             
@@ -821,19 +963,20 @@ const VoiceAgents = () => {
                 Create Agent
               </Button>
             </DialogFooter>
+          </div>
           </DialogContent>
         </Dialog>
 
         {/* Test Agent Modal */}
         <Dialog open={isTestModalOpen} onOpenChange={setIsTestModalOpen}>
-          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white border-gray-200 overflow-visible pr-2">
+          <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto bg-white border-gray-200">
             <DialogHeader>
               <DialogTitle className="text-gray-900">Test Voice Agent</DialogTitle>
               <DialogDescription>
                 Test your agent with sample lead data to verify it works correctly.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-4">
               {/* Agent Info */}
               {selectedAgentForTest && (
                 <div className="p-3 bg-blue-50 rounded-xl">
@@ -843,7 +986,7 @@ const VoiceAgents = () => {
               )}
 
               {/* Test Lead Data */}
-              <div className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="test_name">Patient Name</Label>
                   <Input
@@ -932,18 +1075,18 @@ const VoiceAgents = () => {
 
         {/* View Details Modal */}
         <Dialog open={isViewDetailsModalOpen} onOpenChange={setIsViewDetailsModalOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white border-gray-200 pr-2">
+          <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto bg-white border-gray-200">
             <DialogHeader>
               <DialogTitle className="text-gray-900">Agent Details</DialogTitle>
               <DialogDescription>
                 View detailed information about this voice agent.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-4">
               {selectedAgentForDetails && (
                 <>
                   {/* Basic Information */}
-                  <div className="grid gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-sm font-medium text-gray-700">Agent Name</Label>
@@ -970,12 +1113,42 @@ const VoiceAgents = () => {
                         <Label className="text-sm font-medium text-gray-700">Assistant Name</Label>
                         <div className="text-sm text-gray-900 mt-1">{(selectedAgentForDetails as any).assistant_name || 'Clara'}</div>
                       </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Return Policy (days)</Label>
+                        <div className="text-sm text-gray-900 mt-1">{selectedAgentForDetails.return_policy_days || '30'}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Reimbursement Invoice</Label>
+                        <div className="text-sm text-gray-900 mt-1">{selectedAgentForDetails.reimbursement_invoice_enabled ? 'On' : 'Off'}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Payment Methods</Label>
+                        <div className="text-sm text-gray-900 mt-1">{selectedAgentForDetails.payment_methods.credit_card_installments}x credit card installments, {selectedAgentForDetails.payment_methods.pix_enabled ? 'PIX enabled' : 'PIX disabled'}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Confirmation Channel</Label>
+                        <div className="text-sm text-gray-900 mt-1">{selectedAgentForDetails.confirmation_channel}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Send Payment Link</Label>
+                        <div className="text-sm text-gray-900 mt-1">{selectedAgentForDetails.sent_paymentlink ? 'Automatic' : 'Manual'}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Apply Discount Consultancy for PIX</Label>
+                        <div className="text-sm text-gray-900 mt-1">
+                          {selectedAgentForDetails.apply_discount_consultancy_pix 
+                            ? `Yes (${selectedAgentForDetails.discount_percentage_pix || 0}% discount)` 
+                            : 'No'}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
+
+
                   {/* Script Information */}
                   {selectedAgentForDetails.script && (
-                    <div className="grid gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <Label className="text-sm font-medium text-gray-700">Greeting Script</Label>
                         <div className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
@@ -1037,20 +1210,21 @@ const VoiceAgents = () => {
 
         {/* Edit Agent Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] bg-white border-gray-200 overflow-visible">
+        <DialogContent className="sm:max-w-[900px] max-h-[85vh] bg-white border-gray-200 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="pr-4">
             <DialogHeader>
               <DialogTitle className="text-gray-900">Edit Voice Agent</DialogTitle>
               <DialogDescription>
                 Update your voice agent configuration and scripts.
               </DialogDescription>
             </DialogHeader>
-            <div className="overflow-y-auto max-h-[calc(90vh-120px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pr-2">
+            <div className="">
               <div className="grid gap-6 py-4">
 
               {/* Agent Configuration */}
-              <div className="grid gap-4">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
                 <div className="grid gap-2">
-                  <Label htmlFor="edit_agent_name">Agent Name</Label>
+                  <Label htmlFor="edit_agent_name">Agent Name (Short name to identify this agent in lists.)</Label>
                   <Input
                     id="edit_agent_name"
                     placeholder="Enter agent name..."
@@ -1070,7 +1244,7 @@ const VoiceAgents = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit_assistant_name">Assistant Name</Label>
+                  <Label htmlFor="edit_assistant_name">Assistant Display Name</Label>
                   <Input
                     id="edit_assistant_name"
                     placeholder="e.g., Clara, Maria..."
@@ -1079,104 +1253,224 @@ const VoiceAgents = () => {
                     className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
                   />
                 </div>
-              </div>
+              {/* </div> */}
 
               {/* Script Configuration */}
-              <div className="grid gap-4">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
                 <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="edit_greeting">Greeting</Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-md w-max" side="top" align="start" sideOffset={8} avoidCollisions={true} collisionPadding={16}>
-                          <div className="space-y-2">
-                            <p className="font-medium text-gray-900">Sample greeting sentences:</p>
-                            <ul className="text-sm space-y-1 text-gray-700">
-                              <li>• &quot;Olá {`{{name}}`}, eu sou a Clara, assistente no consultório do {`{{doctor_name}}`}. Como você está hoje?&quot;</li>
-                            </ul>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Textarea
+                  <VariableTextEditor
                     id="edit_greeting"
-                    placeholder="Describe the greeting"
+                    label="Greeting"
                     value={editAgent.script.greeting}
-                    onChange={(e) => setEditAgent({ 
+                    onChange={(value) => setEditAgent({ 
                       ...editAgent, 
-                      script: { ...editAgent.script, greeting: e.target.value }
+                      script: { ...editAgent.script, greeting: value }
                     })}
-                    className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                    placeholder="Describe the greeting"
+                    variables={GREETING_VARIABLES}
                     rows={3}
+                    tooltipContent={
+                      <div className="space-y-2">
+                        <p className="font-medium text-gray-900">Sample greeting sentences:</p>
+                        <ul className="text-sm space-y-1 text-gray-700">
+                          <li>• &quot;Olá {`{{name}}`}, eu sou a Mariana aqui do consultório do Dr. XXX. Como você está hoje?&quot;</li>
+                        </ul>
+                      </div>
+                    }
                   />
                 </div>
                 <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="edit_availability">Availability</Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-md w-max" side="top" align="start" sideOffset={8} avoidCollisions={true} collisionPadding={16}>
-                          <div className="space-y-2">
-                            <p className="font-medium text-gray-900">Sample availability sentences:</p>
-                            <ul className="text-sm space-y-1 text-gray-700">
-                              <li>A agenda dele está bem cheia no momento, mas tenho uma vaga disponível para {`{{initial_appointment_date}}`}. Gostaria que eu reservasse essa vaga para você?</li>
-                            </ul>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Textarea
+                  <VariableTextEditor
                     id="edit_availability"
-                    placeholder="Describe the availability"
+                    label="Availability"
                     value={editAgent.script.availability}
-                    onChange={(e) => setEditAgent({ 
+                    onChange={(value) => setEditAgent({ 
                       ...editAgent, 
-                      script: { ...editAgent.script, availability: e.target.value }
+                      script: { ...editAgent.script, availability: value }
                     })}
-                    className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                    placeholder="Describe the availability"
+                    variables={AVAILABILITY_VARIABLES}
                     rows={3}
+                    tooltipContent={
+                      <div className="space-y-2">
+                        <p className="font-medium text-gray-900">Sample availability sentences:</p>
+                        <ul className="text-sm space-y-1 text-gray-700">
+                          <li>• Exemplo 1 – Agenda lotada: A agenda do Dr. é muito concorrida e só tem disponibilidade daqui 30 dias {`{{initial_appointment_date}}`}.</li>
+                          <li>• Exemplo 2 – Agenda normal: Temos disponibilidade para os próximos dias, a data mais próxima é {`{{initial_appointment_date}}`}.</li>
+                        </ul>
+                      </div>
+                    }
                   />
                 </div>
                 <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="edit_service_script">How the service works</Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-md w-max" side="top" align="start" sideOffset={8} avoidCollisions={true} collisionPadding={16}>
-                          <div className="space-y-2">
-                            <p className="font-medium text-gray-900">Sample service description sentences:</p>
-                            <ul className="text-sm space-y-1 text-gray-700">
-                              <li>A consulta com o {`{{doctor_name}}`} tem duração média de 1,5 hora para um atendimento atencioso e personalizado. O valor é de {`{{price_first}}`} e inclui um retorno em 30 dias. Se você tiver plano de saúde, emitiremos uma nota para reembolso.</li>
-                            </ul>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Textarea
+                  <VariableTextEditor
                     id="edit_service_script"
-                    placeholder="Describe how the service works"
+                    label="How the service works"
                     value={editAgent.script.service_description}
-                    onChange={(e) => setEditAgent({ 
+                    onChange={(value) => setEditAgent({ 
                       ...editAgent, 
-                      script: { ...editAgent.script, service_description: e.target.value }
+                      script: { ...editAgent.script, service_description: value }
                     })}
-                    className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                    placeholder="Describe how the service works"
+                    variables={SERVICE_DESCRIPTION_VARIABLES}
                     rows={4}
+                    tooltipContent={
+                      <div className="space-y-2">
+                        <p className="font-medium text-gray-900">Sample service description sentences:</p>
+                        <ul className="text-sm space-y-1 text-gray-700">
+                          <li>• Uma consulta com {`{{doctor_name}}`} dura em média {`{{consultation_duration}}`} minutos e oferece um atendimento atencioso e personalizado. O custo é de {`{{consultation_price}}`} e inclui uma consulta de acompanhamento em até {`{{return_policy_days}}`} dias.</li>
+                        </ul>
+                      </div>
+                    }
                   />
                 </div>
-              </div>
+
+                {/* Consultation / Service Configuration */}
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Consultation / Service Configuration</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit_return_policy_days">Return Policy (days) — included follow-up</Label>
+                      <Input
+                        id="edit_return_policy_days"
+                        type="number"
+                        placeholder="Number of days for a follow-up included (e.g., 30)"
+                        value={editAgent.return_policy_days}
+                        onChange={(e) => setEditAgent({ ...editAgent, return_policy_days: parseInt(e.target.value) || 30 })}
+                        className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none placeholder:text-gray-500"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="edit_reimbursement_invoice_enabled">Reimbursement Invoice (On/Off)</Label>
+                        <Switch
+                          id="edit_reimbursement_invoice_enabled"
+                          checked={editAgent.reimbursement_invoice_enabled}
+                          onCheckedChange={(checked) => setEditAgent({ ...editAgent, reimbursement_invoice_enabled: checked })}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600">If enabled, we inform the user invoice is available for insurance claims.</p>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Payment Methods</Label>
+                      <p className="text-sm text-gray-600">Select accepted methods below.</p>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit_credit_card_installments">Credit Card — Installments (1x to 10x)</Label>
+                        <Select
+                          value={editAgent.payment_methods.credit_card_installments.toString()}
+                          onValueChange={(value) => setEditAgent({ 
+                            ...editAgent, 
+                            payment_methods: { 
+                              ...editAgent.payment_methods, 
+                              credit_card_installments: parseInt(value) 
+                            } 
+                          })}
+                        >
+                          <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none">
+                            <SelectValue placeholder="Choose max installments (default 4x)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                              <SelectItem key={num} value={num.toString()}>
+                                {num}x
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="edit_pix_enabled">PIX (single payment)</Label>
+                          <Switch
+                            id="edit_pix_enabled"
+                            checked={editAgent.payment_methods.pix_enabled}
+                            onCheckedChange={(checked) => setEditAgent({ 
+                              ...editAgent, 
+                              payment_methods: { 
+                                ...editAgent.payment_methods, 
+                                pix_enabled: checked 
+                              } 
+                            })}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600">Enable single payment via PIX.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit_confirmation_channel">Confirmation Channel</Label>
+                      <Select
+                        value={editAgent.confirmation_channel}
+                        onValueChange={(value: 'whatsapp' | 'sms' | 'email') => setEditAgent({ ...editAgent, confirmation_channel: value })}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none">
+                          <SelectValue placeholder="Choose where confirmations are sent" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                          <SelectItem value="sms">SMS</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-gray-600">Choose where confirmations are sent: WhatsApp / SMS / Email.</p>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit_sent_paymentlink">Send Payment Link</Label>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="edit_sent_paymentlink"
+                          checked={editAgent.sent_paymentlink}
+                          onCheckedChange={(checked) => setEditAgent({ ...editAgent, sent_paymentlink: checked })}
+                        />
+                        <Label htmlFor="edit_sent_paymentlink" className="text-sm text-gray-600">
+                          {editAgent.sent_paymentlink ? 'Automatically send payment links after booking' : 'Manually send payment links'}
+                        </Label>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit_apply_discount_consultancy_pix">Apply Discount Consultancy for PIX</Label>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="edit_apply_discount_consultancy_pix"
+                          checked={editAgent.apply_discount_consultancy_pix}
+                          onCheckedChange={(checked) => setEditAgent({ ...editAgent, apply_discount_consultancy_pix: checked })}
+                        />
+                        <Label htmlFor="edit_apply_discount_consultancy_pix" className="text-sm text-gray-600">
+                          {editAgent.apply_discount_consultancy_pix ? 'Apply discount for PIX payments' : 'Use standard consultancy pricing'}
+                        </Label>
+                      </div>
+                      {editAgent.apply_discount_consultancy_pix && (
+                        <div className="mt-2">
+                          <Label htmlFor="edit_discount_percentage_pix" className="text-sm font-medium text-gray-700">
+                            Discount Percentage
+                          </Label>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Input
+                              id="edit_discount_percentage_pix"
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={editAgent.discount_percentage_pix}
+                              onChange={(e) => setEditAgent({ ...editAgent, discount_percentage_pix: parseInt(e.target.value) || 0 })}
+                              className="w-20 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 focus:outline-none"
+                              placeholder="5"
+                            />
+                            <span className="text-sm text-gray-600">%</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Enter discount percentage (1-100%)</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              {/* </div> */}
               </div>
             </div>
             
@@ -1196,6 +1490,7 @@ const VoiceAgents = () => {
                 Update Agent
               </Button>
             </DialogFooter>
+          </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -1296,12 +1591,28 @@ const VoiceAgents = () => {
               {/* Agent Details */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Assistant Name:</span>
+                  <span className="text-gray-600">Assistant Display Name:</span>
                   <span className="font-medium text-gray-900">{agent.assistant_name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Language:</span>
                   <span className="font-medium text-gray-900">{agent.language}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Return Policy (days):</span>
+                  <span className="font-medium text-gray-900">{agent.return_policy_days}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Reimbursement Invoice:</span>
+                  <span className="font-medium text-gray-900">{agent.reimbursement_invoice_enabled ? 'On' : 'Off'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Payment Methods:</span>
+                  <span className="font-medium text-gray-900">{agent.payment_methods.credit_card_installments}x credit card installments, {agent.payment_methods.pix_enabled ? 'PIX enabled' : 'PIX disabled'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Confirmation Channel:</span>
+                  <span className="font-medium text-gray-900">{agent.confirmation_channel}</span>
                 </div>
               </div>
 

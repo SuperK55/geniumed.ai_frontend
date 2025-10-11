@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, UserX, UserCheck, Users } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, UserX, UserCheck, Users, Calendar, CalendarCheck, CalendarX } from 'lucide-react';
 import { notify } from '@/utils/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,10 +29,15 @@ interface Doctor {
   languages?: string[];
   telemedicine_available?: boolean;
   working_hours?: any;
+  date_specific_availability?: DateSpecificAvailability[];
   timezone?: string;
   office_address?: string;
   city?: string;
   state?: string;
+  // Google Calendar integration fields
+  google_calendar_id?: string;
+  calendar_sync_enabled?: boolean;
+  last_calendar_sync?: string;
 }
 
 interface DoctorFormData {
@@ -50,6 +55,34 @@ interface DoctorFormData {
   office_address: string;
   city: string;
   state: string;
+  working_hours: WorkingHours;
+  date_specific_availability: DateSpecificAvailability[];
+  timezone: string;
+}
+
+interface TimeSlot {
+  id: string;
+  start: string;
+  end: string;
+}
+
+interface WorkingHours {
+  monday: { enabled: boolean; timeSlots: TimeSlot[] };
+  tuesday: { enabled: boolean; timeSlots: TimeSlot[] };
+  wednesday: { enabled: boolean; timeSlots: TimeSlot[] };
+  thursday: { enabled: boolean; timeSlots: TimeSlot[] };
+  friday: { enabled: boolean; timeSlots: TimeSlot[] };
+  saturday: { enabled: boolean; timeSlots: TimeSlot[] };
+  sunday: { enabled: boolean; timeSlots: TimeSlot[] };
+}
+
+interface DateSpecificAvailability {
+  id?: string;
+  date: string; // YYYY-MM-DD format
+  type: 'unavailable' | 'modified_hours';
+  reason?: string;
+  start?: string; // HH:MM format (only for modified_hours)
+  end?: string; // HH:MM format (only for modified_hours)
 }
 
 const MEDICAL_SPECIALTIES = [
@@ -128,7 +161,39 @@ const Doctors = () => {
     telemedicine_available: false,
     office_address: '',
     city: '',
-    state: ''
+    state: '',
+    working_hours: {
+      monday: { 
+        enabled: true, 
+        timeSlots: [{ id: '1', start: '09:00', end: '17:00' }] 
+      },
+      tuesday: { 
+        enabled: true, 
+        timeSlots: [{ id: '2', start: '09:00', end: '17:00' }] 
+      },
+      wednesday: { 
+        enabled: true, 
+        timeSlots: [{ id: '3', start: '09:00', end: '17:00' }] 
+      },
+      thursday: { 
+        enabled: true, 
+        timeSlots: [{ id: '4', start: '09:00', end: '17:00' }] 
+      },
+      friday: { 
+        enabled: true, 
+        timeSlots: [{ id: '5', start: '09:00', end: '17:00' }] 
+      },
+      saturday: { 
+        enabled: false, 
+        timeSlots: [] 
+      },
+      sunday: { 
+        enabled: false, 
+        timeSlots: [] 
+      }
+    },
+    date_specific_availability: [],
+    timezone: 'America/Sao_Paulo'
   });
   // const { toast } = useToast();
 
@@ -162,7 +227,113 @@ const Doctors = () => {
 
   useEffect(() => {
     fetchDoctors();
+    
+    // Listen for calendar connection success from OAuth window
+    const handleCalendarSuccess = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'CALENDAR_CONNECTED') {
+        notify.success('Google Calendar Connected', {
+          description: 'Calendar has been successfully connected',
+          duration: 4000
+        });
+        fetchDoctors(); // Refresh doctors list
+      }
+    };
+    
+    window.addEventListener('message', handleCalendarSuccess);
+    return () => window.removeEventListener('message', handleCalendarSuccess);
   }, []);
+
+  // Google Calendar API functions
+  const connectGoogleCalendar = async (doctorId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/google-calendar/auth/${doctorId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Open Google OAuth in new window
+        window.open(data.authUrl, '_blank', 'width=500,height=600');
+        
+        notify.success('Google Calendar', {
+          description: 'Please complete the authorization in the new window',
+          duration: 4000
+        });
+      } else {
+        const error = await response.json();
+        notify.error('Calendar Connection Failed', {
+          description: error.error || 'Failed to initiate Google Calendar connection',
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Error connecting Google Calendar:', error);
+      notify.error('Calendar Connection Failed', {
+        description: 'Network error occurred',
+        duration: 4000
+      });
+    }
+  };
+
+  const disconnectGoogleCalendar = async (doctorId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/google-calendar/disconnect/${doctorId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        notify.success('Google Calendar Disconnected', {
+          description: 'Calendar has been successfully disconnected',
+          duration: 4000
+        });
+        // Refresh doctors list to update calendar status
+        fetchDoctors();
+      } else {
+        const error = await response.json();
+        notify.error('Disconnect Failed', {
+          description: error.error || 'Failed to disconnect Google Calendar',
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Error disconnecting Google Calendar:', error);
+      notify.error('Disconnect Failed', {
+        description: 'Network error occurred',
+        duration: 4000
+      });
+    }
+  };
+
+  const getCalendarStatus = async (doctorId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/google-calendar/status/${doctorId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+    } catch (error) {
+      console.error('Error getting calendar status:', error);
+    }
+    return null;
+  };
 
   // Filter doctors based on search term
   const filteredDoctors = doctors.filter(doctor =>
@@ -187,7 +358,39 @@ const Doctors = () => {
       telemedicine_available: false,
       office_address: '',
       city: '',
-      state: ''
+      state: '',
+      working_hours: {
+        monday: { 
+          enabled: true, 
+          timeSlots: [{ id: '1', start: '09:00', end: '17:00' }] 
+        },
+        tuesday: { 
+          enabled: true, 
+          timeSlots: [{ id: '2', start: '09:00', end: '17:00' }] 
+        },
+        wednesday: { 
+          enabled: true, 
+          timeSlots: [{ id: '3', start: '09:00', end: '17:00' }] 
+        },
+        thursday: { 
+          enabled: true, 
+          timeSlots: [{ id: '4', start: '09:00', end: '17:00' }] 
+        },
+        friday: { 
+          enabled: true, 
+          timeSlots: [{ id: '5', start: '09:00', end: '17:00' }] 
+        },
+        saturday: { 
+          enabled: false, 
+          timeSlots: [] 
+        },
+        sunday: { 
+          enabled: false, 
+          timeSlots: [] 
+        }
+      },
+      date_specific_availability: [],
+      timezone: 'America/Sao_Paulo'
     });
     setEditingDoctor(null);
   };
@@ -225,7 +428,9 @@ const Doctors = () => {
         office_address: formData.office_address,
         city: formData.city,
         state: formData.state,
-        timezone: 'America/Sao_Paulo',
+        working_hours: formData.working_hours,
+        date_specific_availability: formData.date_specific_availability,
+        timezone: formData.timezone,
         owner_id: user?.id
       };
 
@@ -317,6 +522,52 @@ const Doctors = () => {
     }
   };
 
+  // Helper function to convert old working hours format to new format
+  const convertWorkingHours = (oldHours: any): WorkingHours => {
+    if (!oldHours) {
+      return {
+        monday: { enabled: true, timeSlots: [{ id: '1', start: '09:00', end: '17:00' }] },
+        tuesday: { enabled: true, timeSlots: [{ id: '2', start: '09:00', end: '17:00' }] },
+        wednesday: { enabled: true, timeSlots: [{ id: '3', start: '09:00', end: '17:00' }] },
+        thursday: { enabled: true, timeSlots: [{ id: '4', start: '09:00', end: '17:00' }] },
+        friday: { enabled: true, timeSlots: [{ id: '5', start: '09:00', end: '17:00' }] },
+        saturday: { enabled: false, timeSlots: [] },
+        sunday: { enabled: false, timeSlots: [] }
+      };
+    }
+
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const converted: WorkingHours = {} as WorkingHours;
+
+    days.forEach((day, index) => {
+      const dayData = oldHours[day];
+      if (dayData) {
+        // Check if it's old format (has start/end directly) or new format (has timeSlots)
+        if (dayData.start && dayData.end && !dayData.timeSlots) {
+          // Old format - convert to new format
+          converted[day as keyof WorkingHours] = {
+            enabled: dayData.enabled || false,
+            timeSlots: dayData.enabled ? [{ id: `${index + 1}`, start: dayData.start, end: dayData.end }] : []
+          };
+        } else {
+          // New format - use as is
+          converted[day as keyof WorkingHours] = {
+            enabled: dayData.enabled || false,
+            timeSlots: dayData.timeSlots || []
+          };
+        }
+      } else {
+        // Default for missing days
+        converted[day as keyof WorkingHours] = {
+          enabled: index < 5, // Monday-Friday enabled by default
+          timeSlots: index < 5 ? [{ id: `${index + 1}`, start: '09:00', end: '17:00' }] : []
+        };
+      }
+    });
+
+    return converted;
+  };
+
   // Open edit dialog
   const openEditDialog = (doctor: Doctor) => {
     setEditingDoctor(doctor);
@@ -334,7 +585,10 @@ const Doctors = () => {
       telemedicine_available: doctor.telemedicine_available || false,
       office_address: doctor.office_address || '',
       city: doctor.city || '',
-      state: doctor.state || ''
+      state: doctor.state || '',
+      working_hours: convertWorkingHours(doctor.working_hours),
+      date_specific_availability: doctor.date_specific_availability || [],
+      timezone: doctor.timezone || 'America/Sao_Paulo'
     });
     setShowAddDialog(true);
   };
@@ -540,6 +794,291 @@ const Doctors = () => {
                   }}
                 />
               </div>
+
+              {/* Working Hours Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Set when you are available for meetings</h3>
+                
+                {Object.entries(formData.working_hours).map(([day, dayData]) => (
+                  <div key={day} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
+                    <div className="w-16 flex-shrink-0">
+                      <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                        {day.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={dayData.enabled}
+                          onChange={(e) => {
+                            const newWorkingHours = { ...formData.working_hours };
+                            newWorkingHours[day as keyof WorkingHours] = {
+                              ...dayData,
+                              enabled: e.target.checked,
+                              timeSlots: e.target.checked && dayData.timeSlots.length === 0 
+                                ? [{ id: Date.now().toString(), start: '09:00', end: '17:00' }]
+                                : dayData.timeSlots
+                            };
+                            setFormData({ ...formData, working_hours: newWorkingHours });
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm font-medium capitalize">{day}</span>
+                        {dayData.enabled && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newWorkingHours = { ...formData.working_hours };
+                              const newTimeSlot = {
+                                id: Date.now().toString(),
+                                start: '09:00',
+                                end: '17:00'
+                              };
+                              newWorkingHours[day as keyof WorkingHours] = {
+                                ...dayData,
+                                timeSlots: [...dayData.timeSlots, newTimeSlot]
+                              };
+                              setFormData({ ...formData, working_hours: newWorkingHours });
+                            }}
+                            className="h-6 w-6 p-0 text-blue-600 hover:text-blue-700"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {dayData.enabled ? (
+                        <div className="space-y-2">
+                          {dayData.timeSlots.length === 0 ? (
+                            <div className="text-sm text-gray-500 italic">No time slots set</div>
+                          ) : (
+                            dayData.timeSlots.map((timeSlot, index) => (
+                              <div key={timeSlot.id} className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="time"
+                                    value={timeSlot.start}
+                                    onChange={(e) => {
+                                      const newWorkingHours = { ...formData.working_hours };
+                                      const updatedTimeSlots = [...dayData.timeSlots];
+                                      updatedTimeSlots[index] = { ...timeSlot, start: e.target.value };
+                                      newWorkingHours[day as keyof WorkingHours] = {
+                                        ...dayData,
+                                        timeSlots: updatedTimeSlots
+                                      };
+                                      setFormData({ ...formData, working_hours: newWorkingHours });
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                  <span className="text-gray-400">to</span>
+                                  <input
+                                    type="time"
+                                    value={timeSlot.end}
+                                    onChange={(e) => {
+                                      const newWorkingHours = { ...formData.working_hours };
+                                      const updatedTimeSlots = [...dayData.timeSlots];
+                                      updatedTimeSlots[index] = { ...timeSlot, end: e.target.value };
+                                      newWorkingHours[day as keyof WorkingHours] = {
+                                        ...dayData,
+                                        timeSlots: updatedTimeSlots
+                                      };
+                                      setFormData({ ...formData, working_hours: newWorkingHours });
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newWorkingHours = { ...formData.working_hours };
+                                    const updatedTimeSlots = dayData.timeSlots.filter((_, i) => i !== index);
+                                    newWorkingHours[day as keyof WorkingHours] = {
+                                      ...dayData,
+                                      timeSlots: updatedTimeSlots,
+                                      enabled: updatedTimeSlots.length > 0
+                                    };
+                                    setFormData({ ...formData, working_hours: newWorkingHours });
+                                  }}
+                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 italic">Unavailable</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Timezone Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Timezone</label>
+                <Select
+                  value={formData.timezone}
+                  onValueChange={(value) => setFormData({ ...formData, timezone: value })}
+                >
+                  <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="America/Sao_Paulo">São Paulo (GMT-3)</SelectItem>
+                    <SelectItem value="America/New_York">New York (GMT-5)</SelectItem>
+                    <SelectItem value="Europe/London">London (GMT+0)</SelectItem>
+                    <SelectItem value="Europe/Paris">Paris (GMT+1)</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Tokyo (GMT+9)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date-Specific Availability Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Date-Specific Hours</h3>
+                    <p className="text-sm text-gray-600">Adjust hours for specific days or mark as unavailable</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newAvailability: DateSpecificAvailability = {
+                        id: Date.now().toString(),
+                        date: new Date().toISOString().split('T')[0],
+                        type: 'unavailable',
+                        reason: ''
+                      };
+                      setFormData({
+                        ...formData,
+                        date_specific_availability: [...formData.date_specific_availability, newAvailability]
+                      });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Date
+                  </Button>
+                </div>
+
+                {formData.date_specific_availability.map((availability, index) => (
+                  <div key={availability.id || index} className="p-4 border border-gray-200 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-900">Date-Specific Availability</h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const updatedAvailability = formData.date_specific_availability.filter((_, i) => i !== index);
+                          setFormData({ ...formData, date_specific_availability: updatedAvailability });
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Date</label>
+                        <Input
+                          type="date"
+                          value={availability.date}
+                          onChange={(e) => {
+                            const updatedAvailability = [...formData.date_specific_availability];
+                            updatedAvailability[index] = { ...availability, date: e.target.value };
+                            setFormData({ ...formData, date_specific_availability: updatedAvailability });
+                          }}
+                          className="bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Type</label>
+                        <Select
+                          value={availability.type}
+                          onValueChange={(value: 'unavailable' | 'modified_hours') => {
+                            const updatedAvailability = [...formData.date_specific_availability];
+                            updatedAvailability[index] = { ...availability, type: value };
+                            setFormData({ ...formData, date_specific_availability: updatedAvailability });
+                          }}
+                        >
+                          <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unavailable">Unavailable</SelectItem>
+                            <SelectItem value="modified_hours">Modified Hours</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Reason</label>
+                      <Input
+                        value={availability.reason || ''}
+                        onChange={(e) => {
+                          const updatedAvailability = [...formData.date_specific_availability];
+                          updatedAvailability[index] = { ...availability, reason: e.target.value };
+                          setFormData({ ...formData, date_specific_availability: updatedAvailability });
+                        }}
+                        placeholder="e.g., Holiday, Personal day, Conference"
+                        className="bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
+                      />
+                    </div>
+
+                    {availability.type === 'modified_hours' && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Start Time</label>
+                          <Input
+                            type="time"
+                            value={availability.start || '09:00'}
+                            onChange={(e) => {
+                              const updatedAvailability = [...formData.date_specific_availability];
+                              updatedAvailability[index] = { ...availability, start: e.target.value };
+                              setFormData({ ...formData, date_specific_availability: updatedAvailability });
+                            }}
+                            className="bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">End Time</label>
+                          <Input
+                            type="time"
+                            value={availability.end || '17:00'}
+                            onChange={(e) => {
+                              const updatedAvailability = [...formData.date_specific_availability];
+                              updatedAvailability[index] = { ...availability, end: e.target.value };
+                              setFormData({ ...formData, date_specific_availability: updatedAvailability });
+                            }}
+                            className="bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {formData.date_specific_availability.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>No date-specific availability set</p>
+                    <p className="text-sm">Click "Add Date" to set specific dates when the doctor is unavailable or has modified hours</p>
+                  </div>
+                )}
+              </div>
               
               <div className="flex gap-2 pt-4">
                 <Button type="submit" className="flex-1">
@@ -559,7 +1098,7 @@ const Doctors = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -594,6 +1133,20 @@ const Doctors = () => {
                 <p className="text-sm font-medium text-gray-600">Inactive Doctors</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {doctors.filter(d => !d.is_active).length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <CalendarCheck className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Calendar Connected</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {doctors.filter(d => d.google_calendar_id).length}
                 </p>
               </div>
             </div>
@@ -678,8 +1231,55 @@ const Doctors = () => {
                   </div>
                 )}
                 {doctor.bio && (
-                  <p><span className="font-medium">Bio:</span> {doctor.bio}</p>
+                  <p><span className="font-medium">Authorities:</span> {doctor.bio}</p>
                 )}
+                
+                {/* Google Calendar Status */}
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {doctor.google_calendar_id ? (
+                        <>
+                          <CalendarCheck className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-600">Calendar Connected</span>
+                        </>
+                      ) : (
+                        <>
+                          <CalendarX className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-medium text-gray-500">No Calendar</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    {doctor.google_calendar_id ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => disconnectGoogleCalendar(doctor.id)}
+                        className="text-red-600 hover:text-red-700 text-xs px-2 py-1 h-7"
+                      >
+                        <CalendarX className="w-3 h-3 mr-1" />
+                        Disconnect
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => connectGoogleCalendar(doctor.id)}
+                        className="text-blue-600 hover:text-blue-700 text-xs px-2 py-1 h-7"
+                      >
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Connect
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {doctor.last_calendar_sync && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Last sync: {new Date(doctor.last_calendar_sync).toLocaleString()}
+                    </p>
+                  )}
+                </div>
               </div>
               
               <div className="flex gap-2 pt-3">

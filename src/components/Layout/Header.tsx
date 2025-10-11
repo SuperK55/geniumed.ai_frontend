@@ -24,40 +24,37 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-64 right-0 z-40 h-16 bg-white border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-64 right-0 z-40 h-16 bg-white border-t border-gray-200">
       <div className="flex items-center justify-end px-6 h-full">
         {/* Right Section */}
         <div className="flex items-center space-x-4">
           
-
-          
-
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative rounded-xl">
-            <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-          </Button>
+          {/* <Button variant="ghost" size="icon" className="relative rounded-none hover:bg-transparent">
+            <Bell className="w-5 h-5 text-black" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-xs text-white font-medium">7</span>
+            </span>
+          </Button> */}
 
-          {/* Divider */}
-          <div className="hidden md:block w-px h-8 bg-gray-200"></div>
+          {/* User Avatar */}
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium text-white">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </span>
+          </div>
 
-          {/* User Menu */}
+          {/* User Name and Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2 px-3 rounded-xl">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'DS'}
-                  </span>
-                </div>
-                <div className="hidden md:block text-left">
-                  <div className="text-sm font-medium text-gray-900">{user?.name || 'Dr. Smith'}</div>
-                  <div className="text-xs text-gray-500">Cardiologist</div>
-                </div>
-                <ChevronDown className="w-4 h-4 text-gray-600" />
+              <Button variant="ghost" className="flex items-center space-x-1 px-2 py-4 h-auto hover:bg-gray-50 shadow-none">
+                <span className="text-sm font-medium text-black">
+                  {user?.name || ''}
+                </span>
+                <ChevronDown className="w-4 h-4 text-black" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl border-gray-200 bg-white">
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem 
                 className="rounded-lg hover:bg-gray-50 focus:bg-gray-50"
                 onClick={handleProfileClick}

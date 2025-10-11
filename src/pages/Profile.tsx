@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { 
   Edit2, 
   Save, 
@@ -27,7 +28,8 @@ import axios from 'axios';
 interface ProfileFormData {
   name: string;
   specialty: string;
-  about_me: string;
+  social_proof_enabled: boolean;
+  social_proof_text: string;
 }
 
 const Profile = () => {
@@ -41,7 +43,16 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<ProfileFormData>({
     name: user?.name || '',
     specialty: user?.specialty || '',
-    about_me: user?.about_me || ''
+    social_proof_enabled: user?.social_proof_enabled || false,
+    social_proof_text: user?.social_proof_text || ''
+  });
+
+  // Temporary form state for editing (only committed on save)
+  const [tempProfileData, setTempProfileData] = useState<ProfileFormData>({
+    name: user?.name || '',
+    specialty: user?.specialty || '',
+    social_proof_enabled: user?.social_proof_enabled || false,
+    social_proof_text: user?.social_proof_text || ''
   });
 
   // Password form state
@@ -54,11 +65,14 @@ const Profile = () => {
   // Update profile data when user changes
   useEffect(() => {
     if (user) {
-      setProfileData({
+      const userData = {
         name: user.name || '',
         specialty: user.specialty || '',
-        about_me: user.about_me || ''
-      });
+        social_proof_enabled: user.social_proof_enabled || false,
+        social_proof_text: user.social_proof_text || ''
+      };
+      setProfileData(userData);
+      setTempProfileData(userData);
     }
   }, [user]);
 
@@ -77,9 +91,10 @@ const Profile = () => {
       
       // Send simplified fields directly - no mapping needed
       const updateData = {
-        name: profileData.name,
-        specialty: profileData.specialty,
-        about_me: profileData.about_me
+        name: tempProfileData.name,
+        specialty: tempProfileData.specialty,
+        social_proof_enabled: tempProfileData.social_proof_enabled,
+        social_proof_text: tempProfileData.social_proof_text
       };
 
       const response = await axios.put(
@@ -93,6 +108,10 @@ const Profile = () => {
       if (response.data.ok) {
         // Update user context directly
         updateUser(response.data.user);
+        
+        // Commit the temporary data to the main profile data
+        setProfileData(tempProfileData);
+        
         setIsEditing(false);
         notify.success('Profile Updated Successfully!', {
           description: 'Your profile information has been saved.',
@@ -178,8 +197,20 @@ const Profile = () => {
     }
   };
 
-  const handleInputChange = (field: keyof ProfileFormData, value: string) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof ProfileFormData, value: string | boolean) => {
+    setTempProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditStart = () => {
+    // Reset temp data to current profile data when starting to edit
+    setTempProfileData(profileData);
+    setIsEditing(true);
+  };
+
+  const handleEditCancel = () => {
+    // Revert temp data back to original profile data
+    setTempProfileData(profileData);
+    setIsEditing(false);
   };
 
   return (
@@ -188,14 +219,14 @@ const Profile = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-          <p className="text-gray-600 mt-1">Manage your information</p>
+          <p className="text-gray-600 mt-1">Manage your business information</p>
         </div>
         <div className="flex space-x-3">
           {isEditing ? (
             <>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditing(false)}
+              <Button 
+                variant="outline" 
+                onClick={handleEditCancel}
                 className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 disabled={isSaving}
               >
@@ -208,7 +239,7 @@ const Profile = () => {
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsEditing(true)}>
+            <Button onClick={handleEditStart}>
               <Edit2 className="w-4 h-4 mr-2" />
               Edit Profile
             </Button>
@@ -230,59 +261,58 @@ const Profile = () => {
           <CardContent>
             <div className="space-y-6">
               <div>
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Business / Professional Name</Label>
                 <Input
                   id="name"
-                  value={profileData.name}
+                  value={isEditing ? tempProfileData.name : profileData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   disabled={!isEditing}
                   className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
-                  style={{ 
-                    backgroundColor: 'white !important', 
-                    backgroundImage: 'none !important',
-                    WebkitBoxShadow: 'none !important',
-                    boxShadow: 'none !important'
-                  }}
-                  placeholder="Enter your full name"
+                  
+                  placeholder="Enter your business / professional name"
                 />
               </div>
 
               <div>
-                <Label htmlFor="specialty">Specialty</Label>
+                <Label htmlFor="specialty">Specialty / Services</Label>
                 <Input
                   id="specialty"
-                  value={profileData.specialty}
+                  value={isEditing ? tempProfileData.specialty : profileData.specialty}
                   onChange={(e) => handleInputChange('specialty', e.target.value)}
                   disabled={!isEditing}
                   className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
-                  style={{ 
-                    backgroundColor: 'white !important', 
-                    backgroundImage: 'none !important',
-                    WebkitBoxShadow: 'none !important',
-                    boxShadow: 'none !important'
-                  }}
-                  placeholder="Enter your medical specialty"
+                  
+                  placeholder="Enter your specialty / services"
                 />
               </div>
 
               <div>
-                <Label htmlFor="about_me">About Me</Label>
-                <Textarea
-                  id="about_me"
-                  value={profileData.about_me}
-                  onChange={(e) => handleInputChange('about_me', e.target.value)}
-                  disabled={!isEditing}
-                  className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
-                  style={{ 
-                    backgroundColor: 'white !important', 
-                    backgroundImage: 'none !important',
-                    WebkitBoxShadow: 'none !important',
-                    boxShadow: 'none !important'
-                  }}
-                  placeholder="Tell us about yourself, your experience, and expertise"
-                  rows={4}
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="social_proof_enabled">Social Proof Enabled</Label>
+                  <Switch
+                    id="social_proof_enabled"
+                    checked={isEditing ? tempProfileData.social_proof_enabled : profileData.social_proof_enabled}
+                    onCheckedChange={(checked) => handleInputChange('social_proof_enabled', checked)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Enable to include a realistic success case in conversations.</p>
               </div>
+
+              {(isEditing ? tempProfileData.social_proof_enabled : profileData.social_proof_enabled) && (
+                <div>
+                  <Label htmlFor="social_proof_text">Social Proof</Label>
+                  <Textarea
+                    id="social_proof_text"
+                    value={isEditing ? tempProfileData.social_proof_text : profileData.social_proof_text}
+                    onChange={(e) => handleInputChange('social_proof_text', e.target.value)}
+                    disabled={!isEditing}
+                    className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
+                    placeholder="One concise story that matches your service (e.g., 'Dr. Silva helped Maria overcome her anxiety in just 3 sessions')."
+                    rows={3}
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -321,12 +351,7 @@ const Profile = () => {
                           value={passwordData.currentPassword}
                           onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
                           className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
-                          style={{ 
-                            backgroundColor: 'white !important', 
-                            backgroundImage: 'none !important',
-                            WebkitBoxShadow: 'none !important',
-                            boxShadow: 'none !important'
-                          }}
+                          
                         />
                       </div>
                       <div>
@@ -337,12 +362,7 @@ const Profile = () => {
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                           className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
-                          style={{ 
-                            backgroundColor: 'white !important', 
-                            backgroundImage: 'none !important',
-                            WebkitBoxShadow: 'none !important',
-                            boxShadow: 'none !important'
-                          }}
+                          
                         />
                       </div>
                       <div>
@@ -353,13 +373,7 @@ const Profile = () => {
                           value={passwordData.confirmPassword}
                           onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                           className="mt-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-2 focus:ring-opacity-20"
-                          style={{ 
-                            backgroundColor: 'white !important', 
-                            backgroundImage: 'none !important',
-                            WebkitBoxShadow: 'none !important',
-                            boxShadow: 'none !important'
-                          }}
-                                                 />
+                        />
                        </div>
                     </div>
                   <DialogFooter>

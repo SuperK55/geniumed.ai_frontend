@@ -7,6 +7,8 @@ import VoiceAgents from './VoiceAgents';
 import CallLogs from './CallLogs';
 import Doctors from './Doctors';
 import Profile from './Profile';
+import Appointments from './Appointments';
+import Settings from './Settings';
 
 const MedicalCRM = () => {
   return (
@@ -29,18 +31,14 @@ const MedicalCRM = () => {
                 <p className="text-gray-500">Coming soon...</p>
               </div>
             } />
-            <Route path="appointments" element={
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Appointments Module</h2>
-                <p className="text-gray-500">Coming soon...</p>
-              </div>
-            } />
+            <Route path="appointments" element={<Appointments />} />
             <Route path="consultations" element={
               <div className="text-center py-12">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">Consultations Module</h2>
                 <p className="text-gray-500">Coming soon...</p>
               </div>
             } />
+            <Route path="settings" element={<Settings />} />
           </Routes>
         </div>
       </main>

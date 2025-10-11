@@ -8,7 +8,8 @@ interface User {
   name: string;
   role: string;
   specialty?: string;
-  about_me?: string;
+  social_proof_enabled?: boolean;
+  social_proof_text?: string;
   default_agent_id?: string;
   created_at?: string;
   last_login?: string;

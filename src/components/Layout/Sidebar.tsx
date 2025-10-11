@@ -8,7 +8,8 @@ import {
   Stethoscope,
   Heart,
   UserCheck,
-  Phone
+  Phone,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import logo from '../../assets/imgs/logo.png';
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Patients', href: '/patients', icon: Users },
   { name: 'Appointments', href: '/appointments', icon: Calendar },
   { name: 'Consultations', href: '/consultations', icon: Stethoscope },
+  { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];
 
 const Sidebar = () => {

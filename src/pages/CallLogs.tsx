@@ -536,7 +536,7 @@ const CallLogs = () => {
                     <div><strong>Name:</strong> {selectedLog.doctorName}</div>
                     <div><strong>Specialty:</strong> {selectedLog.doctorSpecialty}</div>
                     {selectedLog.doctorBio && (
-                      <div><strong>Bio:</strong> {selectedLog.doctorBio}</div>
+                      <div><strong>Authorities:</strong> {selectedLog.doctorBio}</div>
                     )}
                   </CardContent>
                 </Card>
@@ -623,17 +623,6 @@ const CallLogs = () => {
                           </div>
                         )}
                       </div>
-                      
-                      {selectedLog.callAnalysis.custom_analysis_data && (
-                        <div>
-                          <strong className="text-sm text-gray-700">Custom Data:</strong>
-                          <div className="mt-1 text-sm">
-                            <pre className="bg-white p-2 rounded border text-xs overflow-x-auto">
-                              {JSON.stringify(selectedLog.callAnalysis.custom_analysis_data, null, 2)}
-                            </pre>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
